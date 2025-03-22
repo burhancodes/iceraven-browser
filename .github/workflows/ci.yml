@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - iceraven
+  workflow_dispatch:
 
 jobs:
   release-automation:
