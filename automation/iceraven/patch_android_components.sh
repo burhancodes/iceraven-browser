@@ -16,3 +16,4 @@ sed -i "s#gleanPythonEnvDir#// gleanPythonEnvDir#g" android-components/**/*.grad
 git -C android-components apply < automation/iceraven/patches/top_sites_no_most_visted_sites.patch
 git -C android-components apply < automation/iceraven/patches/suggestions_increase_number.patch
 git -C android-components apply < automation/iceraven/patches/toolbar.patch
+git -C android-components apply < automation/iceraven/patches/mocha.patch
