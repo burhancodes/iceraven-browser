@@ -37,7 +37,7 @@ object FeatureFlags {
     fun isPocketRecommendationsFeatureEnabled(context: Context): Boolean {
         val langTag = LocaleManager.getCurrentLocale(context)
             ?.toLanguageTag() ?: getSystemDefault().toLanguageTag()
-        return listOf("en-US", "en-CA").contains(langTag)
+        return listOf("en-US", "en-CA", langTag).contains(langTag)
     }
 
     /**

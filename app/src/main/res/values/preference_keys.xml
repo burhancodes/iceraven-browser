@@ -434,9 +434,10 @@
     <string name="pref_key_success_download_dialog" translatable="false">pref_key_success_download_dialog</string>
     <string name="pref_key_show_qr_scan_search" translatable="false">pref_key_show_qr_scan_search</string>
     <string name="pref_key_show_reader_mode_btn" translatable="false">pref_key_show_reader_mode_btn</string>
-    <!-- notification settings -->
-    <string name="pref_key_show_fullscreen_toast" translatable="false">pref_key_show_fullscreen_toast</string>
+    <!-- other settings -->
     <string name="pref_key_other_customization_category" translatable="false">pref_key_other_customization_category</string>
+    <string name="pref_key_show_fullscreen_toast" translatable="false">pref_key_show_fullscreen_toast</string>
+    <string name="pref_key_suggest_shipped_domains" translatable="false">pref_key_suggest_shipped_domains</string>
 
     <!--Translations -->
     <string name="pref_key_ignore_translations_data_saver_warning" translatable="false">pref_key_ignore_translations_data_saver_warning</string>

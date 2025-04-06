@@ -498,7 +498,8 @@ class Core(
     val passwordsStorage: SyncableLoginsStorage get() = lazyPasswordsStorage.value
     val autofillStorage: AutofillCreditCardsAddressesStorage get() = lazyAutofillStorage.value
     val domainsAutocompleteProvider: BaseDomainAutocompleteProvider? get() =
-        if (FxNimbus.features.suggestShippedDomains.value().enabled) {
+        if (FxNimbus.features.suggestShippedDomains.value().enabled &&
+            context.settings().shouldSuggestShippedDomains) {
             lazyDomainsAutocompleteProvider.value
         } else {
             null

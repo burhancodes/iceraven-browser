@@ -2796,7 +2796,8 @@
     <string name="preferences_show_qr_scan_search">Show QR scan search</string>
     <string name="preferences_show_reader_mode_btn">Show Reader Mode Button</string>
     <string name="preferences_other_customization">Others</string>
-    <string name="preferences_show_fullscreen_toast">Fullscreen Toast</string>
+    <string name="preferences_show_fullscreen_toast">Fullscreen toast</string>
+    <string name="preferences_suggest_shipped_domains">Show shipped domains suggestions</string>
 
     <!-- Content description for headings announced by accessibility service. The first parameter is the text of the heading. Talkback will announce the first parameter and then speak the word "Heading" indicating to the user that this text is a heading for a section. -->
     <string name="a11y_heading">%s, Heading</string>
