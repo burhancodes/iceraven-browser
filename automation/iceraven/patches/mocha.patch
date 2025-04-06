@@ -88,14 +88,14 @@ index d68ba86fc0..aa3badc281 100644
 +	<color name="photonDarkGrey05A45">#ff6c7086</color>
 +	<color name="photonDarkGrey10">#ff585b70</color>
 +	<color name="photonDarkGrey20">#ff45475a</color>
-+	<color name="photonDarkGrey30">#ff313244</color>
++	<color name="photonDarkGrey30">#ff1e1e2e</color>
 +	<color name="photonDarkGrey30A95">#ff313244</color>
 +	<color name="photonDarkGrey30A96">#ff313244</color>
 +	<color name="photonDarkGrey40">#ff313244</color>
 +	<color name="photonDarkGrey50">#ff1e1e2e</color>
 +	<color name="photonDarkGrey60">#ff11111b</color>
 +	<color name="photonDarkGrey70">#ff181825</color>
-+	<color name="photonDarkGrey80">#ff181825</color>
++	<color name="photonDarkGrey80">#ff0c0c12</color>
 +	<color name="photonDarkGrey90">#ff11111b</color>
 +	<color name="photonDarkGrey90A40">#ff11111b</color>
 +	<color name="photonDarkGrey90A50">#ff11111b</color>
