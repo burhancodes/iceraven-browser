@@ -48,6 +48,9 @@
             android:key="@string/pref_key_strip_url"
             android:summary="@string/preferences_strip_url_description"
             android:title="@string/preferences_strip_url_title" />
+        <SwitchPreference
+            android:key="@string/pref_key_suggest_shipped_domains"
+            android:title="@string/preferences_suggest_shipped_domains"/>
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

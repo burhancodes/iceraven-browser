@@ -173,6 +173,11 @@ class CustomizationFragment : PreferenceFragmentCompat() {
 
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
+
+        requirePreference<SwitchPreference>(R.string.pref_key_suggest_shipped_domains).apply {
+            isChecked = requireContext().settings().shouldSuggestShippedDomains
+            onPreferenceChangeListener = SharedPreferenceUpdater()
+        }
     }
 
     private fun setupGesturesCategory(isSwipeToolbarToSwitchTabsVisible: Boolean) {

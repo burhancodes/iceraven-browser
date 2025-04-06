@@ -1022,6 +1022,11 @@ class Settings(private val appContext: Context) : PreferencesHolder {
         default = true,
     )
 
+    var shouldSuggestShippedDomains by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_suggest_shipped_domains),
+        default = true,
+    )
+
     /**
      * Check each active accessibility service to see if it can perform gestures, if any can,
      * then it is *likely* a switch service is enabled. We are assuming this to be the case based on #7486
@@ -1701,7 +1706,7 @@ class Settings(private val appContext: Context) : PreferencesHolder {
     var showPocketRecommendationsFeature by lazyFeatureFlagPreference(
         appContext.getPreferenceKey(R.string.pref_key_pocket_homescreen_recommendations),
         featureFlag = FeatureFlags.isPocketRecommendationsFeatureEnabled(appContext),
-        default = { homescreenSections[HomeScreenSection.POCKET] == true },
+        default = { false },
     )
 
     /**
@@ -1786,7 +1791,7 @@ class Settings(private val appContext: Context) : PreferencesHolder {
      */
     var showContileFeature by booleanPreference(
         key = appContext.getPreferenceKey(R.string.pref_key_enable_contile),
-        default = true,
+        default = false,
     )
 
     /**
