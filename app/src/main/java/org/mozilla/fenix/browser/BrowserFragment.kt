@@ -31,6 +31,7 @@ import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.tabs.WindowFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
+import mozilla.components.support.ktx.android.util.dpToPx
 import mozilla.components.support.utils.ext.isLandscape
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.AddressToolbar
@@ -362,6 +363,9 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             browserToolbarView.view.removeNavigationAction(it)
         }
         leadingAction = null
+
+        // set paddingStart when no leading action button (especially HomeButton)
+        _browserToolbarView!!.view.setPadding(8.dpToPx(resources.displayMetrics), 0, 0, 0)
     }
 
     /**
@@ -422,7 +426,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         feltPrivateBrowsingEnabled: Boolean,
         context: Context,
     ) {
-        val showHomeButton = !redesignEnabled
+        val showHomeButton = !redesignEnabled && context.settings().shouldShowHomeButton
         val showEraseButton = feltPrivateBrowsingEnabled && isPrivate && (isLandscape || isTablet)
 
         if (showHomeButton || showEraseButton) {

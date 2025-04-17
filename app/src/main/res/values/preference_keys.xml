@@ -438,6 +438,7 @@
     <string name="pref_key_other_customization_category" translatable="false">pref_key_other_customization_category</string>
     <string name="pref_key_show_fullscreen_toast" translatable="false">pref_key_show_fullscreen_toast</string>
     <string name="pref_key_suggest_shipped_domains" translatable="false">pref_key_suggest_shipped_domains</string>
+    <string name="pref_key_show_home_button" translatable="false">pref_key_show_home_button</string>
 
     <!--Translations -->
     <string name="pref_key_ignore_translations_data_saver_warning" translatable="false">pref_key_ignore_translations_data_saver_warning</string>

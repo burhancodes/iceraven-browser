@@ -95,6 +95,11 @@
         <SwitchPreference
             app:iconSpaceReserved="false"
             android:defaultValue="true"
+            android:key="@string/pref_key_show_home_button"
+            android:title="@string/preferences_show_home_button"/>
+        <SwitchPreference
+            app:iconSpaceReserved="false"
+            android:defaultValue="true"
             android:key="@string/pref_key_show_clipboard_suggestions"
             android:title="@string/preferences_show_clipboard_suggestions" />
         <SwitchPreference
