@@ -5,7 +5,32 @@
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.preference.PreferenceCategory
+        android:layout="@layout/preference_cat_style"
+        android:title="@string/preferences_set_homepage"
+        app:iconSpaceReserved="false">
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_default_homepage"
+            android:title="@string/preferences_default_homepage" />
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_custom_homepage"
+            android:title="@string/preferences_custom_homepage" />
+
+        <androidx.preference.EditTextPreference
+            android:dependency="@string/pref_key_custom_homepage"
+            android:key="@string/pref_key_custom_homepage_url"
+            android:dialogTitle="@string/preferences_custom_homepage"
+            app:useSimpleSummaryProvider="true" />
+
+    </androidx.preference.PreferenceCategory>
+
     <androidx.preference.SwitchPreference
+        app:allowDividerAbove="true"
         android:key="@string/pref_key_show_top_sites"
         android:title="@string/top_sites_toggle_top_recent_sites_4" />
 
@@ -13,12 +38,6 @@
         android:dependency="@string/pref_key_show_top_sites"
         android:key="@string/pref_key_show_top_recent_sites"
         android:title="@string/preferences_show_top_recent_sites" />
-
-    <androidx.preference.CheckBoxPreference
-        android:dependency="@string/pref_key_show_top_sites"
-        android:layout="@layout/checkbox_left_sub_preference"
-        android:key="@string/pref_key_enable_contile"
-        android:title="@string/customize_toggle_contile" />
 
     <androidx.preference.SwitchPreference
         android:key="@string/pref_key_recent_tabs"
@@ -36,12 +55,6 @@
         android:key="@string/pref_key_pocket_homescreen_recommendations"
         android:title="@string/customize_toggle_pocket_2"
         android:summary="@string/customize_toggle_pocket_summary" />
-
-    <androidx.preference.CheckBoxPreference
-        android:dependency="@string/pref_key_pocket_homescreen_recommendations"
-        android:layout="@layout/checkbox_left_sub_preference"
-        android:key="@string/pref_key_pocket_sponsored_stories"
-        android:title="@string/customize_toggle_pocket_sponsored" />
 
     <androidx.preference.Preference
         android:key="@string/pref_key_wallpapers"

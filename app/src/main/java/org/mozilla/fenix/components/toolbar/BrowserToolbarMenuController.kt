@@ -372,9 +372,20 @@ class DefaultBrowserToolbarMenuController(
                 )
             }
             is ToolbarMenu.Item.NewTab -> {
-                navController.navigate(
-                    BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = true),
-                )
+                if (settings.shouldUseDefaultHomepage) {
+                    navController.navigate(
+                        BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = true),
+                    )
+                } else {
+                    tabsUseCases.addTab(
+                        settings.customHomepageUrl,
+                        selectTab = true,
+                        startLoading = true,
+                        parentId = null,
+                        contextId = null,
+                        private = appStore.state.mode.isPrivate,
+                    )
+                }
             }
             is ToolbarMenu.Item.SetDefaultBrowser -> {
                 activity.openSetDefaultBrowserOption()

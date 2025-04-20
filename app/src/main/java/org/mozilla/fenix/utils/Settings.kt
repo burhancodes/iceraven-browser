@@ -1032,6 +1032,21 @@ class Settings(private val appContext: Context) : PreferencesHolder {
         default = true,
     )
 
+    var shouldShowSignInButton by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_show_sign_in_button),
+        default = true,
+    )
+
+    var shouldUseDefaultHomepage by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_default_homepage),
+        default = true,
+    )
+
+    var customHomepageUrl by stringPreference(
+        appContext.getPreferenceKey(R.string.pref_key_custom_homepage_url),
+        default = "https://duckduckgo.com",
+    )
+
     /**
      * Check each active accessibility service to see if it can perform gestures, if any can,
      * then it is *likely* a switch service is enabled. We are assuming this to be the case based on #7486
@@ -1719,7 +1734,7 @@ class Settings(private val appContext: Context) : PreferencesHolder {
      */
     val showPocketSponsoredStories by lazyFeatureFlagPreference(
         key = appContext.getPreferenceKey(R.string.pref_key_pocket_sponsored_stories),
-        default = { homescreenSections[HomeScreenSection.POCKET_SPONSORED_STORIES] == true },
+        default = { false },
         featureFlag = FeatureFlags.isPocketSponsoredStoriesFeatureEnabled(appContext),
     )
 

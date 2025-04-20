@@ -31,6 +31,7 @@ import org.mozilla.fenix.components.accounts.AccountState
 import org.mozilla.fenix.components.accounts.FenixAccountManager
 import org.mozilla.fenix.components.toolbar.BrowserMenuSignIn
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.theme.ThemeManager
 import org.mozilla.fenix.whatsnew.WhatsNew
@@ -213,7 +214,7 @@ class HomeMenu(
         // We will show syncSignIn item when the accountAuth item:
         //    1. is not needed or
         //    2. it is needed, but the account manager is not available yet
-        val syncSignInMenuItem = if (accountAuthItem == null) syncSignInMenuItem() else null
+        val syncSignInMenuItem = if (accountAuthItem == null && context.settings().shouldShowSignInButton) syncSignInMenuItem() else null
 
         val menuItems = listOfNotNull(
             bookmarksItem,

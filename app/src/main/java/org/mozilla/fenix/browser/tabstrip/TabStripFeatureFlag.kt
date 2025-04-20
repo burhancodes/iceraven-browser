@@ -20,7 +20,7 @@ fun Context.isTabStripEnabled(): Boolean =
  * Returns true for channels that have the tab strip enabled.
  */
 private fun ReleaseChannel.isTabStripChannel(): Boolean =
-    isBeta || isNightlyOrDebug
+    isBeta || isNightlyOrDebug || isFork
 
 /**
  * Returns true if the the device has the prerequisites to enable the tab strip.

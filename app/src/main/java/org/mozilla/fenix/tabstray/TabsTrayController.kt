@@ -262,9 +262,22 @@ class DefaultTabsTrayController(
             )
         }
 
-        navController.navigate(
-            TabsTrayFragmentDirections.actionGlobalHome(focusOnAddressBar = true),
-        )
+        if (settings.shouldUseDefaultHomepage) {
+            // TODO: focus on address bar behaviour control
+            navController.navigate(
+                TabsTrayFragmentDirections.actionGlobalHome(focusOnAddressBar = true),
+            )
+        } else {
+            tabsUseCases.addTab(
+                settings.customHomepageUrl,
+                selectTab = true,
+                startLoading = true,
+                parentId = null,
+                contextId = null,
+                private = isPrivate,
+            )
+            handleNavigateToBrowser()
+        }
         navigationInteractor.onTabTrayDismissed()
         profiler?.addMarker(
             "DefaultTabTrayController.onNewTabTapped",

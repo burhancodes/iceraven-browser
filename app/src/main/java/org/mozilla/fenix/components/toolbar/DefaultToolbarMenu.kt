@@ -76,6 +76,7 @@ open class DefaultToolbarMenu(
     private val shouldUseBottomToolbar = context.settings().shouldUseBottomToolbar
     private val shouldShowMenuToolbar = !context.settings().navigationToolbarEnabled
     private val shouldShowTopSites = context.settings().showTopSitesFeature
+    private val notShowSignInButton = !context.settings().signedInFxaAccount && !context.settings().shouldShowSignInButton
     private val accountManager = FenixAccountManager(context)
 
     private val selectedSession: TabSessionState?
@@ -443,7 +444,7 @@ open class DefaultToolbarMenu(
                 downloadsItem,
                 passwordsItem,
                 extensionsItem,
-                syncMenuItem(),
+                if (notShowSignInButton) null else syncMenuItem(),
                 BrowserMenuDivider(),
                 findInPageItem,
                 translationsItem.apply { visible = ::shouldShowTranslations },

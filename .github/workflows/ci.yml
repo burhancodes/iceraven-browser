@@ -33,7 +33,6 @@ jobs:
 
       - name: Patch on the fly
         run: |
-          sed -i 's#\.\./version.txt#\./version.txt#g' android-components/plugins/config/src/main/java/ConfigPlugin.kt
           ./automation/iceraven/patch_android_components.sh
 
       - name: Relpace strings

@@ -235,6 +235,12 @@ class CustomizationFragment : PreferenceFragmentCompat() {
             isChecked = requireContext().settings().shouldShowFullScreenToast
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
+
+
+        requirePreference<SwitchPreference>(R.string.pref_key_show_sign_in_button).apply {
+            isChecked = requireContext().settings().shouldShowSignInButton
+            onPreferenceChangeListener = SharedPreferenceUpdater()
+        }
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {

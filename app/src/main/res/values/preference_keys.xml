@@ -439,6 +439,11 @@
     <string name="pref_key_show_fullscreen_toast" translatable="false">pref_key_show_fullscreen_toast</string>
     <string name="pref_key_suggest_shipped_domains" translatable="false">pref_key_suggest_shipped_domains</string>
     <string name="pref_key_show_home_button" translatable="false">pref_key_show_home_button</string>
+    <string name="pref_key_show_sign_in_button" translatable="false">pref_key_show_sign_in_button</string>
+    <!-- homepage settings -->
+    <string name="pref_key_default_homepage" translatable="false">pref_key_default_homepage</string>
+    <string name="pref_key_custom_homepage" translatable="false">pref_key_custom_homepage</string>
+    <string name="pref_key_custom_homepage_url" translatable="false">pref_key_custom_homepage_url</string>
 
     <!--Translations -->
     <string name="pref_key_ignore_translations_data_saver_warning" translatable="false">pref_key_ignore_translations_data_saver_warning</string>

@@ -40,6 +40,10 @@
   <string name="preferences_show_fullscreen_toast">全屏後的提示框</string>
   <string name="preferences_suggest_shipped_domains">顯示預設域名建議</string>
   <string name="preferences_show_home_button">顯示主頁按鈕</string>
+  <string name="preferences_show_sign_in_button">顯示登入按鈕</string>
+  <string name="preferences_set_homepage">變更首頁</string>
+  <string name="preferences_default_homepage">預設首頁</string>
+  <string name="preferences_custom_homepage">自訂首頁</string>
 
 
   <!-- App name for private browsing mode. %s is the name of the app (for example "Firefox"). -->

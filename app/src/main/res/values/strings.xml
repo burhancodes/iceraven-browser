@@ -2799,6 +2799,10 @@
     <string name="preferences_show_fullscreen_toast">Fullscreen toast</string>
     <string name="preferences_suggest_shipped_domains">Show shipped domains suggestions</string>
     <string name="preferences_show_home_button">Show home button</string>
+    <string name="preferences_show_sign_in_button">Show Sign in button</string>
+    <string name="preferences_set_homepage">Change homepage</string>
+    <string name="preferences_default_homepage">Default Homepage</string>
+    <string name="preferences_custom_homepage">Custom Homepage</string>
 
     <!-- Content description for headings announced by accessibility service. The first parameter is the text of the heading. Talkback will announce the first parameter and then speak the word "Heading" indicating to the user that this text is a heading for a section. -->
     <string name="a11y_heading">%s, Heading</string>

@@ -90,10 +90,12 @@
         app:iconSpaceReserved="false">
         <androidx.preference.EditTextPreference
             android:key="@string/pref_key_addons_custom_account"
-            android:title="@string/addons_custom_source_account" />
+            android:title="@string/addons_custom_source_account"
+            app:useSimpleSummaryProvider="true" />
         <androidx.preference.EditTextPreference
             android:key="@string/pref_key_addons_custom_collection"
-            android:title="@string/addons_custom_source_collection" />
+            android:title="@string/addons_custom_source_collection"
+            app:useSimpleSummaryProvider="true" />
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
@@ -123,5 +125,8 @@
         <SwitchPreference
             android:key="@string/pref_key_show_fullscreen_toast"
             android:title="@string/preferences_show_fullscreen_toast" />
+        <SwitchPreference
+            android:key="@string/pref_key_show_sign_in_button"
+            android:title="@string/preferences_show_sign_in_button" />
     </androidx.preference.PreferenceCategory>
 </androidx.preference.PreferenceScreen>
