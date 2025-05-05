@@ -5,11 +5,11 @@
   <!-- Placeholder text shown in the search bar before a user enters text -->
   <string name="addons_search_hint">搜尋元件</string>
   <!-- Preference for showing display name instead of email -->
-  <string name="preferences_show_display_name_insteadof_email">在工具欄展示顯示名而不是郵件地址</string>
+  <string name="preferences_show_display_name_insteadof_email">在工具欄顯示顯示名而不是郵件地址</string>
   <!-- Title for strip url preference in customization settings -->
   <string name="preferences_strip_url_title">隱藏 URL 中的 HTTP/HTTPS/WWW 字元</string>
   <!-- Description for strip url preference in customization settings -->
-  <string name="preferences_strip_url_description">開啟後隱藏工具欄和標籤頁 URL 中的 HTTP/HTTPS/WWW 字元</string>
+  <string name="preferences_strip_url_description">開啟後隱藏工具欄和分頁 URL 中的 HTTP/HTTPS/WWW 字元</string>
   <!-- Label for add-ons custom source account preference -->
   <string name="addons_custom_source_account">收藏集所有者</string>
   <!-- Label for add-ons custom source collection preference -->
@@ -17,11 +17,11 @@
   <!-- Preference category for system behavior customization -->
   <string name="preferences_system_behavior">設定系統行為</string>
   <!-- Title for relinquish memory preference in customization settings -->
-  <string name="preferences_relinquish_memory_title">系統記憶體不足時掛起標籤頁</string>
+  <string name="preferences_relinquish_memory_title">系統記憶體不足時掛起分頁</string>
   <!-- Description for relinquish memory preference in customization settings -->
-  <string name="preferences_relinquish_memory_description">開啟後，當系統記憶體不足時，標籤頁會被掛起，同時頁面狀態會丟失</string>
+  <string name="preferences_relinquish_memory_description">開啟後，當系統記憶體不足時，分頁會被掛起，同時頁面狀態會丟失</string>
   <!-- Preference for Top Sites show most recent sites or not -->
-  <string name="preferences_show_top_recent_sites">展示經常訪問的網站</string>
+  <string name="preferences_show_top_recent_sites">顯示經常造訪的網站</string>
   <string name="preferences_dns_over_https">DNS over HTTPS</string>
   <string name="preferences_dns_over_https_on">開啟</string>
   <string name="preferences_dns_over_https_off">關閉</string>
@@ -32,14 +32,14 @@
   <string name="confirm_addons_delete_cache">您確定要刪除附加元件元數據緩存檔案嗎？</string>
   <string name="confirm_addons_delete_cache_yes">確定</string>
   <string name="confirm_addons_delete_cache_no">取消</string>
-  <string name="preferences_search_opened_tabs">搜尋已開啟的標籤頁</string>
+  <string name="preferences_search_opened_tabs">搜尋已開啟的分頁</string>
   <string name="preferences_show_success_download_dialog">完成時的對話方塊</string>
   <string name="preferences_show_qr_scan_search">顯示 QR 掃描搜尋</string>
   <string name="preferences_show_reader_mode_btn">顯示閱讀畫面按鈕</string>
   <string name="preferences_other_customization">其他</string>
   <string name="preferences_show_fullscreen_toast">全屏後的提示框</string>
   <string name="preferences_suggest_shipped_domains">顯示預設域名建議</string>
-  <string name="preferences_show_home_button">顯示主頁按鈕</string>
+  <string name="preferences_show_home_button">顯示首頁按鈕</string>
   <string name="preferences_show_sign_in_button">顯示登入按鈕</string>
   <string name="preferences_set_homepage">變更首頁</string>
   <string name="preferences_default_homepage">預設首頁</string>
@@ -146,7 +146,7 @@
 
     Text for the info message. %1$s is the name of the app (for example "Firefox").
   -->
-  <string name="open_in_app_cfr_info_message_2">您可以設定使用 %1$s 自動開啟各應用程式當中的鏈結。</string>
+  <string name="open_in_app_cfr_info_message_2">您可以設定使用 %1$s 自動開啟各應用程式當中的連結。</string>
   <!-- Text for the positive action button -->
   <string name="open_in_app_cfr_positive_button_text">開啟設定</string>
   <!-- Text for the negative action button -->
@@ -283,7 +283,7 @@
   <!-- Browser menu button that opens the extensions manager -->
   <string name="browser_menu_manage_extensions">管理擴充套件</string>
   <!-- Content description (not visible, for screen readers etc.): Section heading for recommended extensions. -->
-  <string name="browser_menu_recommended_section_content_description">推薦的擴充套件</string>
+  <string name="browser_menu_recommended_section_content_description">建議的擴充套件</string>
   <!--
     Content description (not visible, for screen readers etc.): Label for plus icon used to add extension.
     %1$s is the name of the extension (for example: ClearURLs).
@@ -500,7 +500,7 @@
   <!-- Button in the search view when shortcuts are displayed that takes a user to the search engine settings -->
   <string name="search_shortcuts_engine_settings">搜尋引擎設定</string>
   <!-- Button in the search view that lets a user navigate to the site in their clipboard -->
-  <string name="awesomebar_clipboard_title">開啟剪貼簿中的鏈結</string>
+  <string name="awesomebar_clipboard_title">開啟剪貼簿中的連結</string>
   <!-- Button in the search suggestions onboarding that allows search suggestions in private sessions -->
   <string name="search_suggestions_onboarding_allow_button">允許</string>
   <!-- Button in the search suggestions onboarding that does not allow search suggestions in private sessions -->
@@ -821,7 +821,7 @@
   <!-- Preference for private browsing options -->
   <string name="preferences_private_browsing_options">隱私瀏覽模式</string>
   <!-- Preference for opening links in a private tab -->
-  <string name="preferences_open_links_in_a_private_tab">用隱私分頁開啟鏈結</string>
+  <string name="preferences_open_links_in_a_private_tab">用隱私分頁開啟連結</string>
   <!-- Preference for allowing screenshots to be taken while in a private tab -->
   <string name="preferences_allow_screenshots_in_private_mode">允許在隱私瀏覽模式中拍攝畫面擷圖</string>
   <!-- Will inform the user of the risk of activating Allow screenshots in private browsing option -->
@@ -959,17 +959,17 @@
   <!-- Summary for preference to show Firefox Suggest search suggestions for web content -->
   <string name="preferences_show_nonsponsored_suggestions_summary">取得您搜尋內容的相關建議</string>
   <!-- Preference for link sharing -->
-  <string name="preferences_link_sharing">鏈結分享</string>
+  <string name="preferences_link_sharing">連結分享</string>
   <!-- Title for the link sharing toggle. %1$s is replaced by the brand name (e.g. Firefox). -->
-  <string name="link_sharing_toggle_title">在 WhatsApp 分享內容中加入 %1$s 的下載鏈結</string>
+  <string name="link_sharing_toggle_title">在 WhatsApp 分享內容中加入 %1$s 的下載連結</string>
   <!-- Body for the link sharing toggle.  %1$s is replaced by the brand name (e.g. Firefox). -->
-  <string name="link_sharing_toggle_body">當您每次在 WhatsApp 分享鏈結時，都邀請朋友使用 %1$s 更快、更安全地上網。</string>
+  <string name="link_sharing_toggle_body">當您每次在 WhatsApp 分享連結時，都邀請朋友使用 %1$s 更快、更安全地上網。</string>
   <!-- Snackbar message shown when user shares a link -->
-  <string name="link_shared_snackbar_message">已分享鏈結</string>
+  <string name="link_shared_snackbar_message">已分享連結</string>
   <!-- Snackbar action label shown when user shares a link -->
   <string name="link_shared_snackbar_action">管理設定</string>
   <!-- Preference for open links in third party apps -->
-  <string name="preferences_open_links_in_apps">用 App 開啟鏈結</string>
+  <string name="preferences_open_links_in_apps">用 App 開啟連結</string>
   <!-- Preference for open links in third party apps always open in apps option -->
   <string name="preferences_open_links_in_apps_always">總是</string>
   <!-- Preference for open links in third party apps ask before opening option -->
@@ -1605,7 +1605,7 @@
   <!-- Broken site reason text for images or videos -->
   <string name="webcompat_reporter_reason_media">圖片或影片</string>
   <!-- Broken site reason text for buttons, links, and other content -->
-  <string name="webcompat_reporter_reason_content">按鈕、鏈結或其他內容</string>
+  <string name="webcompat_reporter_reason_content">按鈕、連結或其他內容</string>
   <!-- Broken site reason text for sign in or sign out -->
   <string name="webcompat_reporter_reason_account">登入或登出</string>
   <!-- Broken site reason text for ad blocker -->
@@ -1755,7 +1755,7 @@
   -->
   <string name="quick_settings_sheet">快速設定表</string>
   <!-- Label that indicates that this option it the recommended one -->
-  <string name="phone_feature_recommended">推薦</string>
+  <string name="phone_feature_recommended">建議</string>
   <!-- Button label for clearing all the information of site permissions -->
   <string name="clear_permissions">清除權限</string>
   <!-- Text for the OK button on Clear permissions dialog -->
@@ -2856,7 +2856,7 @@
   -->
   <string name="default_browser_experiment_card_title">切換您的預設瀏覽器</string>
   <!-- Default browser card text -->
-  <string name="default_browser_experiment_card_text" tools:ignore="BrandUsage">設定使用 Firefox 自動開啟網站、郵件、簡訊當中的鏈結。</string>
+  <string name="default_browser_experiment_card_text" tools:ignore="BrandUsage">設定使用 Firefox 自動開啟網站、郵件、簡訊當中的連結。</string>
   <!-- Content description for close button in collection placeholder. -->
   <string name="remove_home_collection_placeholder_content_description">移除</string>
   <!-- Content description radio buttons with a link to more information -->
@@ -3048,17 +3048,17 @@
   <!-- Current state for elements that can be expanded if interacting with them. Talkback will dictate this after a state change. -->
   <string name="a11y_state_label_expanded">已展開</string>
   <!-- Action label for links to a website containing documentation about a wallpaper collection. Talkback will append this to say "Double tap to open link to learn more about this collection". -->
-  <string name="a11y_action_label_wallpaper_collection_learn_more">開啟鏈結，了解此收藏集的更多資訊</string>
+  <string name="a11y_action_label_wallpaper_collection_learn_more">開啟連結，了解此收藏集的更多資訊</string>
   <!-- Action label for links that point to an article. Talkback will append this to say "Double tap to read the article". -->
   <string name="a11y_action_label_read_article">閱讀此文章</string>
   <!-- Action label for links to the Firefox Pocket website. Talkback will append this to say "Double tap to open link to learn more". -->
-  <string name="a11y_action_label_pocket_learn_more">開啟能讓您了解更多資訊的鏈結</string>
+  <string name="a11y_action_label_pocket_learn_more">開啟能讓您了解更多資訊的連結</string>
   <!-- Content description for headings announced by accessibility service. %s is the text of the heading. Talkback will announce the text and then speak the word "Heading" indicating to the user that this text is a heading for a section. -->
   <string name="a11y_heading">標題 %s</string>
   <!-- Title for dialog displayed when trying to access links present in a text. -->
-  <string name="a11y_links_title">鏈結</string>
+  <string name="a11y_links_title">連結</string>
   <!-- Additional content description for text bodies that contain urls. -->
-  <string name="a11y_links_available">可用鏈結</string>
+  <string name="a11y_links_available">可用連結</string>
   <!-- Translations feature -->
 
   <!--
