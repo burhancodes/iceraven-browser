@@ -1,10 +1,13 @@
 diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index 0fb1e0ab86..169d63e428 100644
+index 0fb1e0ab86..aad82cd82b 100644
 --- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
 +++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -138,16 +138,16 @@ object PhotonColors {
+@@ -136,18 +136,18 @@ object PhotonColors {
+     val LightGrey90 = Color(0xFF80808E)
+ 
      // Dark grey should primarily be used for the Dark theme and secondary buttons.
-     val DarkGrey05 = Color(0xFF5B5B66)
+-    val DarkGrey05 = Color(0xFF5B5B66)
++    val DarkGrey05 = Color(0xFF45475A)
      val DarkGrey05A45 = Color(0x735B5B66)
 -    val DarkGrey10 = Color(0xFF52525E)
 +    val DarkGrey10 = Color(0xFF313244)
@@ -16,7 +19,7 @@ index 0fb1e0ab86..169d63e428 100644
      val DarkGrey40 = Color(0xFF3A3944)
      val DarkGrey50 = Color(0xFF32313C)
 -    val DarkGrey60 = Color(0xFF2B2A33)
-+    val DarkGrey60 = Color(0xFF11111B)
++    val DarkGrey60 = Color(0xFF1E1E2E)
      val DarkGrey70 = Color(0xFF23222B)
 -    val DarkGrey80 = Color(0xFF1C1B22)
 +    val DarkGrey80 = Color(0xFF11111B)
@@ -24,37 +27,10 @@ index 0fb1e0ab86..169d63e428 100644
      val DarkGrey90A40 = Color(0x6615141A)
      val DarkGrey90A50 = DarkGrey90.copy(alpha = 0.50f)
 diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
-index d68ba86fc0..5f86643132 100644
+index d68ba86fc0..0a7afb3b97 100644
 --- a/components/ui/colors/src/main/res/values/photon_colors.xml
 +++ b/components/ui/colors/src/main/res/values/photon_colors.xml
-@@ -104,16 +104,16 @@
- 	<color name="photonTeal90">#002d3e</color>
- 
- 	<!-- Purple -->
--	<color name="photonPurple05">#fff7e2ff</color>
--	<color name="photonPurple10">#fff6b8ff</color>
--	<color name="photonPurple20">#fff68fff</color>
--	<color name="photonPurple30">#fff770ff</color>
--	<color name="photonPurple40">#ffd74cf0</color>
--	<color name="photonPurple50">#ffb833e1</color>
--	<color name="photonPurple60">#ff952bb9</color>
--	<color name="photonPurple70">#ff722291</color>
--	<color name="photonPurple80">#ff4e1a69</color>
--	<color name="photonPurple90">#ff2b1141</color>
-+	<color name="photonPurple05">#ffcba6f7</color>
-+	<color name="photonPurple10">#ffcba6f7</color>
-+	<color name="photonPurple20">#ffcba6f7</color>
-+	<color name="photonPurple30">#ffc6a0f6</color>
-+	<color name="photonPurple40">#ffc6a0f6</color>
-+	<color name="photonPurple50">#ffca9ee6</color>
-+	<color name="photonPurple60">#ffca9ee6</color>
-+	<color name="photonPurple70">#ffca9ee6</color>
-+	<color name="photonPurple80">#ff8839ef</color>
-+	<color name="photonPurple90">#ff8839ef</color>
- 
- 	<!-- Orange -->
- 	<color name="photonOrange05">#fffff4de</color>
-@@ -148,74 +148,74 @@
+@@ -148,15 +148,15 @@
  		Grey is a colour palette that we no longer use.
  		In the future, Grey should be redefined into LightGrey and DarkGrey wherever possible.
  	-->
@@ -78,30 +54,9 @@ index d68ba86fc0..5f86643132 100644
 +	<color name="photonGrey90">#11111b</color>
  
  	<!-- Light Grey -->
--	<color name="photonLightGrey05">#fffbfbfe</color>
--	<color name="photonLightGrey05A40">#66fbfbfe</color>
--	<color name="photonLightGrey05A60">#99fbfbfe</color>
--	<color name="photonLightGrey10">#fff9f9fb</color>
--	<color name="photonLightGrey20">#fff0f0f4</color>
--	<color name="photonLightGrey30">#ffe0e0e6</color>
--	<color name="photonLightGrey40">#ffcfcfd8</color>
--	<color name="photonLightGrey50">#ffbfbfc9</color>
--	<color name="photonLightGrey60">#ffafafba</color>
--	<color name="photonLightGrey70">#ff9f9fad</color>
--	<color name="photonLightGrey80">#ff8f8f9d</color>
--	<color name="photonLightGrey90">#ff80808e</color>
-+	<color name="photonLightGrey05">#ffeff1f5</color>
-+	<color name="photonLightGrey05A40">#ffdce0e8</color>
-+	<color name="photonLightGrey05A60">#ffdce0e8</color>
-+	<color name="photonLightGrey10">#ffeff1f5</color>
-+	<color name="photonLightGrey20">#ffeff1f5</color>
-+	<color name="photonLightGrey30">#ffeff1f5</color>
-+	<color name="photonLightGrey40">#ff7c7f93</color>
-+	<color name="photonLightGrey50">#ff7c7f93</color>
-+	<color name="photonLightGrey60">#ff6c6f85</color>
-+	<color name="photonLightGrey70">#ff5c5f77</color>
-+	<color name="photonLightGrey80">#ff5c5f77</color>
-+	<color name="photonLightGrey90">#ff4c4f69</color>
+ 	<color name="photonLightGrey05">#fffbfbfe</color>
+@@ -173,24 +173,24 @@
+ 	<color name="photonLightGrey90">#ff80808e</color>
  
  	<!-- Dark Grey -->
 -	<color name="photonDarkGrey05">#ff5b5b66</color>
@@ -126,14 +81,14 @@ index d68ba86fc0..5f86643132 100644
 +	<color name="photonDarkGrey05A45">#ff6c7086</color>
 +	<color name="photonDarkGrey10">#ff585b70</color>
 +	<color name="photonDarkGrey20">#ff45475a</color>
-+	<color name="photonDarkGrey30">#ff313244</color>
++	<color name="photonDarkGrey30">#ff1e1e2e</color>
 +	<color name="photonDarkGrey30A95">#ff313244</color>
 +	<color name="photonDarkGrey30A96">#ff313244</color>
 +	<color name="photonDarkGrey40">#ff313244</color>
 +	<color name="photonDarkGrey50">#ff1e1e2e</color>
 +	<color name="photonDarkGrey60">#ff11111b</color>
 +	<color name="photonDarkGrey70">#ff181825</color>
-+	<color name="photonDarkGrey80">#ff181825</color>
++	<color name="photonDarkGrey80">#ff0c0c12</color>
 +	<color name="photonDarkGrey90">#ff11111b</color>
 +	<color name="photonDarkGrey90A40">#ff11111b</color>
 +	<color name="photonDarkGrey90A50">#ff11111b</color>
@@ -142,45 +97,8 @@ index d68ba86fc0..5f86643132 100644
 +	<color name="photonDarkGrey90A96">#ff11111b</color>
  
  	<!-- Violet -->
--	<color name="photonViolet05">#ffE7DFFF</color>
--	<color name="photonViolet10">#ffd9bfff</color>
--	<color name="photonViolet20">#ffcb9eFF</color>
--	<color name="photonViolet20A60">#99cb9eFF</color>
--	<color name="photonViolet30">#ffc689FF</color>
--	<color name="photonViolet40">#ffab71ff</color>
--	<color name="photonViolet40A12">#1fab71ff</color>
--	<color name="photonViolet40A30">#4dab71ff</color>
--	<color name="photonViolet50">#ff9059FF</color>
--	<color name="photonViolet50A32">#529059FF</color>
--	<color name="photonViolet50A48">#7A9059FF</color>
--	<color name="photonViolet60">#ff7542e5</color>
--	<color name="photonViolet60A50">#807542E5</color>
--	<color name="photonViolet70">#ff592ACB</color>
--	<color name="photonViolet70A12">#1F592ACB</color>
--	<color name="photonViolet70A80">#CC592ACB</color>
-+	<color name="photonViolet05">#ffb4befe</color>
-+	<color name="photonViolet10">#ffcba6f7</color>
-+	<color name="photonViolet20">#ffb7bdf8</color>
-+	<color name="photonViolet20A60">#ffcba6f7</color>
-+	<color name="photonViolet30">#ffb7bdf8</color>
-+	<color name="photonViolet40">#ffc6a0f6</color>
-+	<color name="photonViolet40A12">#ffb4befe</color>
-+	<color name="photonViolet40A30">#ffb4befe</color>
-+	<color name="photonViolet50">#ffbabbf1</color>
-+	<color name="photonViolet50A32">#ffb4befe</color>
-+	<color name="photonViolet50A48">#ffcba6f7</color>
-+	<color name="photonViolet60">#ffbabbf1</color>
-+	<color name="photonViolet60A50">#ffcba6f7</color>
-+	<color name="photonViolet70">#ffc6a0f6</color>
-+	<color name="photonViolet70A12">#ffb4befe</color>
-+	<color name="photonViolet70A80">#ffbabbf1</color>
- 	<color name="photonViolet80">#ff45278d</color>
- 	<color name="photonViolet90">#ff321c64</color>
--	<color name="photonViolet90A20">#33321c64</color>
-+	<color name="photonViolet90A20">#ffbac2de</color>
- 
- 	<!-- White -->
- 	<color name="photonWhite">#ffffff</color>
+ 	<color name="photonViolet05">#ffE7DFFF</color>
+@@ -218,4 +218,4 @@
  
  	<!-- Black -->
  	<color name="photonBlack">#000000</color>
