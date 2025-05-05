@@ -1,23 +1,45 @@
-From ad2bc1db56c9bf0075c6726e74fa2a1afc595742 Mon Sep 17 00:00:00 2001
+From 1e18d91da89f76e11f659a45541d4412c45945b7 Mon Sep 17 00:00:00 2001
 From: Burhanverse <burhanverse@gmail.com>
-Date: Sun, 6 Apr 2025 00:55:47 +0530
-Subject: [PATCH] Add mocha colors
+Date: Sat, 5 Apr 2025 22:23:29 +0530
+Subject: [PATCH] [EXP] Fix color
 
 ---
- .../components/ui/colors/PhotonColors.kt      |  8 +--
- .../src/main/res/values/photon_colors.xml     | 54 +++++++++----------
- 2 files changed, 31 insertions(+), 31 deletions(-)
+ .../src/main/java/mozilla/components/ui/colors/PhotonColors.kt  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index 0fb1e0ab86..fe809e1429 100644
+index ac1d2be0e8..0de02997d7 100644
 --- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
 +++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -136,16 +136,16 @@ object PhotonColors {
-     val LightGrey90 = Color(0xFF80808E)
- 
+@@ -145,7 +145,7 @@ object PhotonColors {
+     val DarkGrey30A96 = Color(0xF542414D)
+     val DarkGrey40 = Color(0xFF3A3944)
+     val DarkGrey50 = Color(0xFF32313C)
+-    val DarkGrey60 = Color(0xFF1E1E2E)
++    val DarkGrey60 = Color(0xFF11111B)
+     val DarkGrey70 = Color(0xFF23222B)
+     val DarkGrey80 = Color(0xFF1C1B22)
+     val DarkGrey90 = Color(0xFF15141A)
+-- 
+2.49.0
+
+From 8e848f46f795e5d118adafb4998c3e724f3936b0 Mon Sep 17 00:00:00 2001
+From: Burhanverse <burhanverse@gmail.com>
+Date: Sat, 5 Apr 2025 22:13:20 +0530
+Subject: [PATCH] [EXP] Patch some more colors
+
+---
+ .../main/java/mozilla/components/ui/colors/PhotonColors.kt  | 6 +++---
+ components/ui/colors/src/main/res/values/photon_colors.xml  | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
+index 0fb1e0ab86..ac1d2be0e8 100644
+--- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
++++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
+@@ -138,14 +138,14 @@ object PhotonColors {
      // Dark grey should primarily be used for the Dark theme and secondary buttons.
--    val DarkGrey05 = Color(0xFF5B5B66)
-+    val DarkGrey05 = Color(0xFF45475A)
+     val DarkGrey05 = Color(0xFF5B5B66)
      val DarkGrey05A45 = Color(0x735B5B66)
 -    val DarkGrey10 = Color(0xFF52525E)
 +    val DarkGrey10 = Color(0xFF313244)
@@ -34,10 +56,93 @@ index 0fb1e0ab86..fe809e1429 100644
      val DarkGrey80 = Color(0xFF1C1B22)
      val DarkGrey90 = Color(0xFF15141A)
 diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
-index d68ba86fc0..aa3badc281 100644
+index 1cf1107d0e..5f86643132 100644
 --- a/components/ui/colors/src/main/res/values/photon_colors.xml
 +++ b/components/ui/colors/src/main/res/values/photon_colors.xml
-@@ -148,15 +148,15 @@
+@@ -177,12 +177,12 @@
+ 	<color name="photonDarkGrey05A45">#ff6c7086</color>
+ 	<color name="photonDarkGrey10">#ff585b70</color>
+ 	<color name="photonDarkGrey20">#ff45475a</color>
+-	<color name="photonDarkGrey30">#ff45475a</color>
++	<color name="photonDarkGrey30">#ff313244</color>
+ 	<color name="photonDarkGrey30A95">#ff313244</color>
+ 	<color name="photonDarkGrey30A96">#ff313244</color>
+ 	<color name="photonDarkGrey40">#ff313244</color>
+ 	<color name="photonDarkGrey50">#ff1e1e2e</color>
+-	<color name="photonDarkGrey60">#ff1e1e2e</color>
++	<color name="photonDarkGrey60">#ff11111b</color>
+ 	<color name="photonDarkGrey70">#ff181825</color>
+ 	<color name="photonDarkGrey80">#ff181825</color>
+ 	<color name="photonDarkGrey90">#ff11111b</color>
+-- 
+2.49.0
+
+From b1f692d09de3576465090446b7ded03f7d954f9b Mon Sep 17 00:00:00 2001
+From: Burhanverse <burhanverse@gmail.com>
+Date: Mon, 5 May 2025 15:29:16 +0530
+Subject: [PATCH] Fix: color for the `redesigned menus`
+
+---
+ .../src/main/java/mozilla/components/ui/colors/PhotonColors.kt  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
+index 0de02997d7..169d63e428 100644
+--- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
++++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
+@@ -147,7 +147,7 @@ object PhotonColors {
+     val DarkGrey50 = Color(0xFF32313C)
+     val DarkGrey60 = Color(0xFF11111B)
+     val DarkGrey70 = Color(0xFF23222B)
+-    val DarkGrey80 = Color(0xFF1C1B22)
++    val DarkGrey80 = Color(0xFF11111B)
+     val DarkGrey90 = Color(0xFF15141A)
+     val DarkGrey90A40 = Color(0x6615141A)
+     val DarkGrey90A50 = DarkGrey90.copy(alpha = 0.50f)
+-- 
+2.49.0
+
+From 490ae768aaaa4bfd598c4d08ce6dccd88817d2cb Mon Sep 17 00:00:00 2001
+From: Burhanverse <burhanverse@gmail.com>
+Date: Sat, 5 Apr 2025 18:32:50 +0530
+Subject: [PATCH] Rebase and add mocha colors
+
+---
+ .../src/main/res/values/photon_colors.xml     | 134 +++++++++---------
+ 1 file changed, 67 insertions(+), 67 deletions(-)
+
+diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
+index d68ba86fc0..1cf1107d0e 100644
+--- a/components/ui/colors/src/main/res/values/photon_colors.xml
++++ b/components/ui/colors/src/main/res/values/photon_colors.xml
+@@ -104,16 +104,16 @@
+ 	<color name="photonTeal90">#002d3e</color>
+ 
+ 	<!-- Purple -->
+-	<color name="photonPurple05">#fff7e2ff</color>
+-	<color name="photonPurple10">#fff6b8ff</color>
+-	<color name="photonPurple20">#fff68fff</color>
+-	<color name="photonPurple30">#fff770ff</color>
+-	<color name="photonPurple40">#ffd74cf0</color>
+-	<color name="photonPurple50">#ffb833e1</color>
+-	<color name="photonPurple60">#ff952bb9</color>
+-	<color name="photonPurple70">#ff722291</color>
+-	<color name="photonPurple80">#ff4e1a69</color>
+-	<color name="photonPurple90">#ff2b1141</color>
++	<color name="photonPurple05">#ffcba6f7</color>
++	<color name="photonPurple10">#ffcba6f7</color>
++	<color name="photonPurple20">#ffcba6f7</color>
++	<color name="photonPurple30">#ffc6a0f6</color>
++	<color name="photonPurple40">#ffc6a0f6</color>
++	<color name="photonPurple50">#ffca9ee6</color>
++	<color name="photonPurple60">#ffca9ee6</color>
++	<color name="photonPurple70">#ffca9ee6</color>
++	<color name="photonPurple80">#ff8839ef</color>
++	<color name="photonPurple90">#ff8839ef</color>
+ 
+ 	<!-- Orange -->
+ 	<color name="photonOrange05">#fffff4de</color>
+@@ -148,74 +148,74 @@
  		Grey is a colour palette that we no longer use.
  		In the future, Grey should be redefined into LightGrey and DarkGrey wherever possible.
  	-->
@@ -61,9 +166,30 @@ index d68ba86fc0..aa3badc281 100644
 +	<color name="photonGrey90">#11111b</color>
  
  	<!-- Light Grey -->
- 	<color name="photonLightGrey05">#fffbfbfe</color>
-@@ -173,24 +173,24 @@
- 	<color name="photonLightGrey90">#ff80808e</color>
+-	<color name="photonLightGrey05">#fffbfbfe</color>
+-	<color name="photonLightGrey05A40">#66fbfbfe</color>
+-	<color name="photonLightGrey05A60">#99fbfbfe</color>
+-	<color name="photonLightGrey10">#fff9f9fb</color>
+-	<color name="photonLightGrey20">#fff0f0f4</color>
+-	<color name="photonLightGrey30">#ffe0e0e6</color>
+-	<color name="photonLightGrey40">#ffcfcfd8</color>
+-	<color name="photonLightGrey50">#ffbfbfc9</color>
+-	<color name="photonLightGrey60">#ffafafba</color>
+-	<color name="photonLightGrey70">#ff9f9fad</color>
+-	<color name="photonLightGrey80">#ff8f8f9d</color>
+-	<color name="photonLightGrey90">#ff80808e</color>
++	<color name="photonLightGrey05">#ffeff1f5</color>
++	<color name="photonLightGrey05A40">#ffdce0e8</color>
++	<color name="photonLightGrey05A60">#ffdce0e8</color>
++	<color name="photonLightGrey10">#ffeff1f5</color>
++	<color name="photonLightGrey20">#ffeff1f5</color>
++	<color name="photonLightGrey30">#ffeff1f5</color>
++	<color name="photonLightGrey40">#ff7c7f93</color>
++	<color name="photonLightGrey50">#ff7c7f93</color>
++	<color name="photonLightGrey60">#ff6c6f85</color>
++	<color name="photonLightGrey70">#ff5c5f77</color>
++	<color name="photonLightGrey80">#ff5c5f77</color>
++	<color name="photonLightGrey90">#ff4c4f69</color>
  
  	<!-- Dark Grey -->
 -	<color name="photonDarkGrey05">#ff5b5b66</color>
@@ -88,14 +214,14 @@ index d68ba86fc0..aa3badc281 100644
 +	<color name="photonDarkGrey05A45">#ff6c7086</color>
 +	<color name="photonDarkGrey10">#ff585b70</color>
 +	<color name="photonDarkGrey20">#ff45475a</color>
-+	<color name="photonDarkGrey30">#ff1e1e2e</color>
++	<color name="photonDarkGrey30">#ff45475a</color>
 +	<color name="photonDarkGrey30A95">#ff313244</color>
 +	<color name="photonDarkGrey30A96">#ff313244</color>
 +	<color name="photonDarkGrey40">#ff313244</color>
 +	<color name="photonDarkGrey50">#ff1e1e2e</color>
-+	<color name="photonDarkGrey60">#ff11111b</color>
++	<color name="photonDarkGrey60">#ff1e1e2e</color>
 +	<color name="photonDarkGrey70">#ff181825</color>
-+	<color name="photonDarkGrey80">#ff0c0c12</color>
++	<color name="photonDarkGrey80">#ff181825</color>
 +	<color name="photonDarkGrey90">#ff11111b</color>
 +	<color name="photonDarkGrey90A40">#ff11111b</color>
 +	<color name="photonDarkGrey90A50">#ff11111b</color>
@@ -104,7 +230,51 @@ index d68ba86fc0..aa3badc281 100644
 +	<color name="photonDarkGrey90A96">#ff11111b</color>
  
  	<!-- Violet -->
- 	<color name="photonViolet05">#ffE7DFFF</color>
+-	<color name="photonViolet05">#ffE7DFFF</color>
+-	<color name="photonViolet10">#ffd9bfff</color>
+-	<color name="photonViolet20">#ffcb9eFF</color>
+-	<color name="photonViolet20A60">#99cb9eFF</color>
+-	<color name="photonViolet30">#ffc689FF</color>
+-	<color name="photonViolet40">#ffab71ff</color>
+-	<color name="photonViolet40A12">#1fab71ff</color>
+-	<color name="photonViolet40A30">#4dab71ff</color>
+-	<color name="photonViolet50">#ff9059FF</color>
+-	<color name="photonViolet50A32">#529059FF</color>
+-	<color name="photonViolet50A48">#7A9059FF</color>
+-	<color name="photonViolet60">#ff7542e5</color>
+-	<color name="photonViolet60A50">#807542E5</color>
+-	<color name="photonViolet70">#ff592ACB</color>
+-	<color name="photonViolet70A12">#1F592ACB</color>
+-	<color name="photonViolet70A80">#CC592ACB</color>
++	<color name="photonViolet05">#ffb4befe</color>
++	<color name="photonViolet10">#ffcba6f7</color>
++	<color name="photonViolet20">#ffb7bdf8</color>
++	<color name="photonViolet20A60">#ffcba6f7</color>
++	<color name="photonViolet30">#ffb7bdf8</color>
++	<color name="photonViolet40">#ffc6a0f6</color>
++	<color name="photonViolet40A12">#ffb4befe</color>
++	<color name="photonViolet40A30">#ffb4befe</color>
++	<color name="photonViolet50">#ffbabbf1</color>
++	<color name="photonViolet50A32">#ffb4befe</color>
++	<color name="photonViolet50A48">#ffcba6f7</color>
++	<color name="photonViolet60">#ffbabbf1</color>
++	<color name="photonViolet60A50">#ffcba6f7</color>
++	<color name="photonViolet70">#ffc6a0f6</color>
++	<color name="photonViolet70A12">#ffb4befe</color>
++	<color name="photonViolet70A80">#ffbabbf1</color>
+ 	<color name="photonViolet80">#ff45278d</color>
+ 	<color name="photonViolet90">#ff321c64</color>
+-	<color name="photonViolet90A20">#33321c64</color>
++	<color name="photonViolet90A20">#ffbac2de</color>
+ 
+ 	<!-- White -->
+ 	<color name="photonWhite">#ffffff</color>
+ 
+ 	<!-- Black -->
+ 	<color name="photonBlack">#000000</color>
+-</resources>
++</resources>
+\ No newline at end of file
 -- 
 2.49.0
 
