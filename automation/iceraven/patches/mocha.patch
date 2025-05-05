@@ -1,43 +1,8 @@
-From 1e18d91da89f76e11f659a45541d4412c45945b7 Mon Sep 17 00:00:00 2001
-From: Burhanverse <burhanverse@gmail.com>
-Date: Sat, 5 Apr 2025 22:23:29 +0530
-Subject: [PATCH] [EXP] Fix color
-
----
- .../src/main/java/mozilla/components/ui/colors/PhotonColors.kt  | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index ac1d2be0e8..0de02997d7 100644
+index 0fb1e0ab86..169d63e428 100644
 --- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
 +++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -145,7 +145,7 @@ object PhotonColors {
-     val DarkGrey30A96 = Color(0xF542414D)
-     val DarkGrey40 = Color(0xFF3A3944)
-     val DarkGrey50 = Color(0xFF32313C)
--    val DarkGrey60 = Color(0xFF1E1E2E)
-+    val DarkGrey60 = Color(0xFF11111B)
-     val DarkGrey70 = Color(0xFF23222B)
-     val DarkGrey80 = Color(0xFF1C1B22)
-     val DarkGrey90 = Color(0xFF15141A)
--- 
-2.49.0
-
-From 8e848f46f795e5d118adafb4998c3e724f3936b0 Mon Sep 17 00:00:00 2001
-From: Burhanverse <burhanverse@gmail.com>
-Date: Sat, 5 Apr 2025 22:13:20 +0530
-Subject: [PATCH] [EXP] Patch some more colors
-
----
- .../main/java/mozilla/components/ui/colors/PhotonColors.kt  | 6 +++---
- components/ui/colors/src/main/res/values/photon_colors.xml  | 4 ++--
- 2 files changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index 0fb1e0ab86..ac1d2be0e8 100644
---- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-+++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -138,14 +138,14 @@ object PhotonColors {
+@@ -138,16 +138,16 @@ object PhotonColors {
      // Dark grey should primarily be used for the Dark theme and secondary buttons.
      val DarkGrey05 = Color(0xFF5B5B66)
      val DarkGrey05A45 = Color(0x735B5B66)
@@ -51,68 +16,15 @@ index 0fb1e0ab86..ac1d2be0e8 100644
      val DarkGrey40 = Color(0xFF3A3944)
      val DarkGrey50 = Color(0xFF32313C)
 -    val DarkGrey60 = Color(0xFF2B2A33)
-+    val DarkGrey60 = Color(0xFF1E1E2E)
-     val DarkGrey70 = Color(0xFF23222B)
-     val DarkGrey80 = Color(0xFF1C1B22)
-     val DarkGrey90 = Color(0xFF15141A)
-diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
-index 1cf1107d0e..5f86643132 100644
---- a/components/ui/colors/src/main/res/values/photon_colors.xml
-+++ b/components/ui/colors/src/main/res/values/photon_colors.xml
-@@ -177,12 +177,12 @@
- 	<color name="photonDarkGrey05A45">#ff6c7086</color>
- 	<color name="photonDarkGrey10">#ff585b70</color>
- 	<color name="photonDarkGrey20">#ff45475a</color>
--	<color name="photonDarkGrey30">#ff45475a</color>
-+	<color name="photonDarkGrey30">#ff313244</color>
- 	<color name="photonDarkGrey30A95">#ff313244</color>
- 	<color name="photonDarkGrey30A96">#ff313244</color>
- 	<color name="photonDarkGrey40">#ff313244</color>
- 	<color name="photonDarkGrey50">#ff1e1e2e</color>
--	<color name="photonDarkGrey60">#ff1e1e2e</color>
-+	<color name="photonDarkGrey60">#ff11111b</color>
- 	<color name="photonDarkGrey70">#ff181825</color>
- 	<color name="photonDarkGrey80">#ff181825</color>
- 	<color name="photonDarkGrey90">#ff11111b</color>
--- 
-2.49.0
-
-From b1f692d09de3576465090446b7ded03f7d954f9b Mon Sep 17 00:00:00 2001
-From: Burhanverse <burhanverse@gmail.com>
-Date: Mon, 5 May 2025 15:29:16 +0530
-Subject: [PATCH] Fix: color for the `redesigned menus`
-
----
- .../src/main/java/mozilla/components/ui/colors/PhotonColors.kt  | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index 0de02997d7..169d63e428 100644
---- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-+++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -147,7 +147,7 @@ object PhotonColors {
-     val DarkGrey50 = Color(0xFF32313C)
-     val DarkGrey60 = Color(0xFF11111B)
++    val DarkGrey60 = Color(0xFF11111B)
      val DarkGrey70 = Color(0xFF23222B)
 -    val DarkGrey80 = Color(0xFF1C1B22)
 +    val DarkGrey80 = Color(0xFF11111B)
      val DarkGrey90 = Color(0xFF15141A)
      val DarkGrey90A40 = Color(0x6615141A)
      val DarkGrey90A50 = DarkGrey90.copy(alpha = 0.50f)
--- 
-2.49.0
-
-From 490ae768aaaa4bfd598c4d08ce6dccd88817d2cb Mon Sep 17 00:00:00 2001
-From: Burhanverse <burhanverse@gmail.com>
-Date: Sat, 5 Apr 2025 18:32:50 +0530
-Subject: [PATCH] Rebase and add mocha colors
-
----
- .../src/main/res/values/photon_colors.xml     | 134 +++++++++---------
- 1 file changed, 67 insertions(+), 67 deletions(-)
-
 diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
-index d68ba86fc0..1cf1107d0e 100644
+index d68ba86fc0..5f86643132 100644
 --- a/components/ui/colors/src/main/res/values/photon_colors.xml
 +++ b/components/ui/colors/src/main/res/values/photon_colors.xml
 @@ -104,16 +104,16 @@
@@ -214,12 +126,12 @@ index d68ba86fc0..1cf1107d0e 100644
 +	<color name="photonDarkGrey05A45">#ff6c7086</color>
 +	<color name="photonDarkGrey10">#ff585b70</color>
 +	<color name="photonDarkGrey20">#ff45475a</color>
-+	<color name="photonDarkGrey30">#ff45475a</color>
++	<color name="photonDarkGrey30">#ff313244</color>
 +	<color name="photonDarkGrey30A95">#ff313244</color>
 +	<color name="photonDarkGrey30A96">#ff313244</color>
 +	<color name="photonDarkGrey40">#ff313244</color>
 +	<color name="photonDarkGrey50">#ff1e1e2e</color>
-+	<color name="photonDarkGrey60">#ff1e1e2e</color>
++	<color name="photonDarkGrey60">#ff11111b</color>
 +	<color name="photonDarkGrey70">#ff181825</color>
 +	<color name="photonDarkGrey80">#ff181825</color>
 +	<color name="photonDarkGrey90">#ff11111b</color>
@@ -275,6 +187,3 @@ index d68ba86fc0..1cf1107d0e 100644
 -</resources>
 +</resources>
 \ No newline at end of file
--- 
-2.49.0
-
