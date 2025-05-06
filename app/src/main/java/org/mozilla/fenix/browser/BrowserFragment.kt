@@ -32,6 +32,7 @@ import mozilla.components.feature.tabs.WindowFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.util.dpToPx
+import mozilla.components.support.utils.ext.isContentUrl
 import mozilla.components.support.utils.ext.isLandscape
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.AddressToolbar
@@ -708,6 +709,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                                 sessionId = tab.id,
                                 url = tab.content.url,
                                 title = tab.content.title,
+                                isLocalPdf = tab.content.url.isContentUrl(),
                                 isSecured = tab.content.securityInfo.secure,
                                 sitePermissions = sitePermissions,
                                 gravity = getAppropriateLayoutGravity(),

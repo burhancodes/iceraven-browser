@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import io.github.forkmaintainers.iceraven.components.PagedAMOAddonsProvider
 import androidx.core.app.NotificationManagerCompat
+import mozilla.appservices.remotesettings.RemoteSettingsServer
 import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.addons.migration.DefaultSupportedAddonsChecker
 import mozilla.components.feature.addons.update.DefaultAddonUpdater
@@ -20,6 +21,7 @@ import mozilla.components.lib.crash.store.CrashMiddleware
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
 import mozilla.components.support.base.android.NotificationsDelegate
 import mozilla.components.support.base.worker.Frequency
+import mozilla.components.support.remotesettings.RemoteSettingsService
 import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.R
@@ -53,6 +55,7 @@ import org.mozilla.fenix.perf.StrictModeManager
 import org.mozilla.fenix.perf.lazyMonitored
 import org.mozilla.fenix.utils.ClipboardHandler
 import org.mozilla.fenix.utils.Settings
+import org.mozilla.fenix.utils.isLargeScreenSize
 import org.mozilla.fenix.wifi.WifiConnectionMonitor
 import java.util.concurrent.TimeUnit
 
@@ -228,7 +231,21 @@ class Components(private val context: Context) {
         }
     }
 
-    val fxSuggest by lazyMonitored { FxSuggest(context) }
+    val remoteSettingsService = lazyMonitored {
+        RemoteSettingsService(
+            context,
+            if (context.settings().useProductionRemoteSettingsServer) {
+                RemoteSettingsServer.Prod
+            } else {
+                RemoteSettingsServer.Stage
+            },
+            channel = BuildConfig.BUILD_TYPE,
+            // Need to send this value separately, since `isLargeScreenSize()` is a fenix extension
+            isLargeScreenSize = context.isLargeScreenSize(),
+        )
+    }
+
+    val fxSuggest by lazyMonitored { FxSuggest(context, remoteSettingsService.value) }
 
     val distributionIdManager by lazyMonitored {
         DistributionIdManager(

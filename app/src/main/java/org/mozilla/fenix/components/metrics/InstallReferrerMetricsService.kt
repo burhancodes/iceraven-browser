@@ -11,6 +11,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.GleanMetrics.MetaAttribution
+import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.PlayStoreAttribution
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.utils.Settings
@@ -39,6 +40,12 @@ class InstallReferrerMetricsService(private val context: Context) : MetricsServi
     override fun track(event: Event) = Unit
 
     override fun shouldTrack(event: Event): Boolean = false
+
+    private fun triggerPing() {
+        CoroutineScope(Dispatchers.IO).launch {
+            Pings.playStoreAttribution.submit()
+        }
+    }
 }
 
 /**

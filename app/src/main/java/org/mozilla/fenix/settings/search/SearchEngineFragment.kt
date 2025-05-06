@@ -46,6 +46,12 @@ class SearchEngineFragment : PreferenceFragmentCompat() {
         requirePreference<CheckBoxPreference>(R.string.pref_key_show_trending_search_suggestions).apply {
             isVisible = context.settings().isTrendingSearchesVisible
         }
+        requirePreference<SwitchPreference>(R.string.pref_key_show_recent_search_suggestions).apply {
+            isVisible = context.settings().isRecentSearchesVisible
+        }
+        requirePreference<SwitchPreference>(R.string.pref_key_show_shortcuts_suggestions).apply {
+            isVisible = context.settings().isShortcutSuggestionsVisible
+        }
 
         view?.hideKeyboard()
     }
@@ -74,6 +80,11 @@ class SearchEngineFragment : PreferenceFragmentCompat() {
                     context.settings().shouldShowSearchSuggestions
             }
 
+        val recentSearchSuggestionsPreference =
+            requirePreference<SwitchPreference>(R.string.pref_key_show_recent_search_suggestions).apply {
+                isChecked = context.settings().shouldShowRecentSearchSuggestions
+            }
+
         val autocompleteURLsPreference =
             requirePreference<SwitchPreference>(R.string.pref_key_enable_autocomplete_urls).apply {
                 isChecked = context.settings().shouldAutocompleteInAwesomebar
@@ -81,6 +92,7 @@ class SearchEngineFragment : PreferenceFragmentCompat() {
 
         val searchSuggestionsInPrivatePreference =
             requirePreference<CheckBoxPreference>(R.string.pref_key_show_search_suggestions_in_private).apply {
+                isChecked = context.settings().shouldShowSearchSuggestionsInPrivate
                 isEnabled = context.settings().shouldShowSearchSuggestions
             }
 
@@ -92,6 +104,11 @@ class SearchEngineFragment : PreferenceFragmentCompat() {
         val showBookmarkSuggestions =
             requirePreference<SwitchPreference>(R.string.pref_key_search_bookmarks).apply {
                 isChecked = context.settings().shouldShowBookmarkSuggestions
+            }
+
+        val showShortcutsSuggestions =
+            requirePreference<SwitchPreference>(R.string.pref_key_show_shortcuts_suggestions).apply {
+                isChecked = context.settings().shouldShowShortcutSuggestions
             }
 
         val showSyncedTabsSuggestions =
@@ -150,11 +167,13 @@ class SearchEngineFragment : PreferenceFragmentCompat() {
         searchSuggestionsPreference.onPreferenceChangeListener = SharedPreferenceUpdater()
         showHistorySuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
         showBookmarkSuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
+        showShortcutsSuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
         showSyncedTabsSuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
         showSessionSuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
         showClipboardSuggestions.onPreferenceChangeListener = SharedPreferenceUpdater()
         searchSuggestionsInPrivatePreference.onPreferenceChangeListener = SharedPreferenceUpdater()
         trendingSearchSuggestionsPreference.onPreferenceChangeListener = SharedPreferenceUpdater()
+        recentSearchSuggestionsPreference.onPreferenceChangeListener = SharedPreferenceUpdater()
         showVoiceSearchPreference.onPreferenceChangeListener = object : Preference.OnPreferenceChangeListener {
             override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                 val newBooleanValue = newValue as? Boolean ?: return false

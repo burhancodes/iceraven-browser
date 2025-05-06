@@ -373,6 +373,13 @@ class DefaultBrowserToolbarMenuController(
             }
             is ToolbarMenu.Item.NewTab -> {
                 if (settings.shouldUseDefaultHomepage) {
+                    if (settings.enableHomepageAsNewTab) {
+                        tabsUseCases.addTab.invoke(
+                            url = "about:home",
+                            startLoading = false,
+                            private = currentSession?.content?.private ?: false,
+                        )
+                    }
                     navController.navigate(
                         BrowserFragmentDirections.actionGlobalHome(focusOnAddressBar = true),
                     )
