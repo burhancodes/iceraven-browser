@@ -42,9 +42,6 @@ class InstallReferrerMetricsService(private val context: Context) : MetricsServi
     override fun shouldTrack(event: Event): Boolean = false
 
     private fun triggerPing() {
-        CoroutineScope(Dispatchers.IO).launch {
-            Pings.playStoreAttribution.submit()
-        }
     }
 }
 

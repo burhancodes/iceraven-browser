@@ -31,11 +31,11 @@ plugins {
 }
 
 //dependencyResolutionManagement {
-//    versionCatalogs {
-//        libs {
-//            from(files("../../../gradle/libs.versions.toml"))
-//        }
-//    }
+//   versionCatalogs {
+//       libs {
+//           from(files("./gradle/libs.versions.toml"))
+//       }
+//   }
 //}
 
 ext.topsrcdir = rootProject.projectDir.absolutePath.minus("mobile/android/fenix")
