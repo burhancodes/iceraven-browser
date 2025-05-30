@@ -47,7 +47,7 @@ jobs:
           # See <https://stackoverflow.com/a/70010526> and <https://stackoverflow.com/a/70756876>
           # The runner seems to have ~6 gigs of memory, so we make sure to stay under that.
           # We have Java 11 so we don't have a perm size anymore.
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=2g -Xms1g -Xmx3g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx8g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
         with:
           gradle-home-cache-cleanup: true
           gradle-executable: /usr/bin/time
@@ -62,7 +62,7 @@ jobs:
       - name: Create signed APKs
         uses: abhijitvalluri/sign-apks@v0.8
         with:
-          releaseDirectory: app/build/outputs/apk/fenix/forkRelease/
+          releaseDirectory: gradle/build/app/outputs/apk/fenix/forkRelease/
           signingKeyBase64: ${{ secrets.DEBUG_SIGNING_KEY }}
           alias: ${{ secrets.DEBUG_ALIAS }}
           keyStorePassword: ${{ secrets.DEBUG_KEY_STORE_PASSWORD }}
@@ -73,23 +73,23 @@ jobs:
       - name: Upload arm64 apk
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/fenix/forkRelease/app-fenix-arm64-v8a-forkRelease.apk
+          path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-arm64-v8a-forkRelease.apk
           name: ${{ env.VERSION_NAME }}-browser-arm64-v8a-forkRelease.apk
 
       - name: Upload armeabi apk
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/fenix/forkRelease/app-fenix-armeabi-v7a-forkRelease.apk
+          path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-armeabi-v7a-forkRelease.apk
           name: ${{ env.VERSION_NAME }}-browser-armeabi-v7a-forkRelease.apk
 
       - name: Upload x86 apk
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
+          path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
           name: ${{ env.VERSION_NAME }}-browser-x86-forkRelease.apk
 
       - name: Upload x86_64 apk
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/fenix/forkRelease/app-fenix-x86_64-forkRelease.apk
+          path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86_64-forkRelease.apk
           name: ${{ env.VERSION_NAME }}-browser-x86_64-forkRelease.apk

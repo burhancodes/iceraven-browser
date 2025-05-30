@@ -27,7 +27,6 @@ class AccountUiView(
     private val scope: CoroutineScope,
     private val accountManager: FxaAccountManager,
     private val httpClient: Client,
-    private val updateFxAAllowDomesticChinaServerMenu: () -> Unit,
 ) {
 
     private val preferenceSignIn =
@@ -47,8 +46,6 @@ class AccountUiView(
      */
     fun updateAccountUIState(context: Context, profile: Profile?) {
         val account = accountManager.authenticatedAccount()
-
-        updateFxAAllowDomesticChinaServerMenu()
 
         // Signed-in, no problems.
         if (account != null && !accountManager.accountNeedsReauth()) {

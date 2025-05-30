@@ -264,7 +264,7 @@
           },
           "features": [
             {
-              "featureId": "splash-screen",
+              "featureId": "juno-onboarding",
               "enabled": true,
               "value": {
                 "cards": {

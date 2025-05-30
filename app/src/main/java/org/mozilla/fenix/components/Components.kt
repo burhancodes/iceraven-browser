@@ -21,16 +21,21 @@ import mozilla.components.lib.crash.store.CrashMiddleware
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
 import mozilla.components.support.base.android.NotificationsDelegate
 import mozilla.components.support.base.worker.Frequency
+import mozilla.components.support.remotesettings.DefaultRemoteSettingsSyncScheduler
 import mozilla.components.support.remotesettings.RemoteSettingsService
 import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.Config
+import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.autofill.AutofillConfirmActivity
 import org.mozilla.fenix.autofill.AutofillSearchActivity
 import org.mozilla.fenix.autofill.AutofillUnlockActivity
+import org.mozilla.fenix.browser.tabstrip.isTabStripEnabled
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
+import org.mozilla.fenix.components.appstate.setup.checklist.SetupChecklistState
+import org.mozilla.fenix.components.appstate.setup.checklist.getSetupChecklistCollection
 import org.mozilla.fenix.components.metrics.MetricsMiddleware
 import org.mozilla.fenix.crashes.CrashReportingAppMiddleware
 import org.mozilla.fenix.crashes.SettingsCrashReportCache
@@ -46,7 +51,11 @@ import org.mozilla.fenix.home.PocketUpdatesMiddleware
 import org.mozilla.fenix.home.blocklist.BlocklistHandler
 import org.mozilla.fenix.home.blocklist.BlocklistMiddleware
 import org.mozilla.fenix.home.middleware.HomeTelemetryMiddleware
+import org.mozilla.fenix.home.setup.store.DefaultSetupChecklistRepository
+import org.mozilla.fenix.home.setup.store.SetupChecklistPreferencesMiddleware
+import org.mozilla.fenix.home.setup.store.SetupChecklistTelemetryMiddleware
 import org.mozilla.fenix.messaging.state.MessagingMiddleware
+import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.onboarding.FenixOnboarding
 import org.mozilla.fenix.perf.AppStartReasonProvider
 import org.mozilla.fenix.perf.StartupActivityLog
@@ -85,7 +94,6 @@ class Components(private val context: Context) {
     val services by lazyMonitored { Services(context, core.store, backgroundServices.accountManager) }
     val core by lazyMonitored { Core(context, analytics.crashReporter, strictMode) }
 
-    @Suppress("Deprecation")
     val useCases by lazyMonitored {
         UseCases(
             context,
@@ -122,12 +130,22 @@ class Components(private val context: Context) {
     }
 
     val addonsProvider by lazyMonitored {
-        PagedAMOAddonsProvider(
-            context,
-            core.client,
-            serverURL = BuildConfig.AMO_SERVER_URL,
-            maxCacheAgeInMinutes = AMO_COLLECTION_MAX_CACHE_AGE,
-        )
+        // Check if we have a customized (overridden) AMO collection (supported in Nightly & Beta)
+        if (FeatureFlags.customExtensionCollectionFeature && context.settings().amoCollectionOverrideConfigured()) {
+            PagedAMOAddonsProvider(
+                context,
+                core.client,
+                collectionUser = context.settings().overrideAmoUser,
+                collectionName = context.settings().overrideAmoCollection,
+            )
+        } else {
+            PagedAMOAddonsProvider(
+                context,
+                core.client,
+                serverURL = BuildConfig.AMO_SERVER_URL,
+                maxCacheAgeInMinutes = AMO_COLLECTION_MAX_CACHE_AGE,
+            )
+        }
     }
 
     fun clearAddonCache() {
@@ -144,6 +162,14 @@ class Components(private val context: Context) {
         DefaultSupportedAddonsChecker(
             context,
             Frequency(12, TimeUnit.HOURS),
+        )
+    }
+
+    @Suppress("MagicNumber")
+    val remoteSettingsSyncScheduler by lazyMonitored {
+        DefaultRemoteSettingsSyncScheduler(
+            context,
+            Frequency(24, TimeUnit.HOURS),
         )
     }
 
@@ -205,6 +231,7 @@ class Components(private val context: Context) {
                     emptyList()
                 },
                 recentHistory = emptyList(),
+                setupChecklistState = setupChecklistState(),
             ).run { filterState(blocklistHandler) },
             middlewares = listOf(
                 BlocklistMiddleware(blocklistHandler),
@@ -225,10 +252,26 @@ class Components(private val context: Context) {
                     ),
                 ),
                 HomeTelemetryMiddleware(),
+                SetupChecklistPreferencesMiddleware(DefaultSetupChecklistRepository(context)),
+                SetupChecklistTelemetryMiddleware(),
             ),
         ).also {
+            it.dispatch(AppAction.SetupChecklistAction.Init)
             it.dispatch(AppAction.CrashActionWrapper(CrashAction.Initialize))
         }
+    }
+
+    private fun setupChecklistState() = if (settings.showSetupChecklist) {
+        val type = FxNimbus.features.setupChecklist.value().setupChecklistType
+        SetupChecklistState(
+            checklistItems = getSetupChecklistCollection(
+                settings = settings,
+                collection = type,
+                tabStripEnabled = context.isTabStripEnabled(),
+            ),
+        )
+    } else {
+        null
     }
 
     val remoteSettingsService = lazyMonitored {

@@ -45,7 +45,7 @@ jobs:
           # See <https://stackoverflow.com/a/70010526> and <https://stackoverflow.com/a/70756876>
           # The runner seems to have ~6 gigs of memory, so we make sure to stay under that.
           # We have Java 11 so we don't have a perm size anymore.
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=2g -Xms1g -Xmx3g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx8g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
         with:
           gradle-home-cache-cleanup: true
           gradle-executable: /usr/bin/time
@@ -61,7 +61,7 @@ jobs:
         if: "contains(toJSON(github.event.ref_type), 'tag') && contains(toJSON(github.event.ref), 'iceraven')"
         uses: abhijitvalluri/sign-apks@v0.8
         with:
-          releaseDirectory: app/build/outputs/apk/fenix/forkRelease/
+          releaseDirectory: gradle/build/app/outputs/apk/fenix/forkRelease/
           signingKeyBase64: ${{ secrets.DEBUG_SIGNING_KEY }}
           alias: ${{ secrets.DEBUG_ALIAS }}
           keyStorePassword: ${{ secrets.DEBUG_KEY_STORE_PASSWORD }}
@@ -111,7 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fenix/forkRelease/app-fenix-arm64-v8a-forkRelease.apk
+          asset_path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-arm64-v8a-forkRelease.apk
           asset_name: ${{ github.event.ref }}-browser-arm64-v8a-forkRelease.apk
           asset_content_type: application/vnd.android.package-archive
 
@@ -122,7 +122,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fenix/forkRelease/app-fenix-armeabi-v7a-forkRelease.apk
+          asset_path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-armeabi-v7a-forkRelease.apk
           asset_name: ${{ github.event.ref }}-browser-armeabi-v7a-forkRelease.apk
           asset_content_type: application/vnd.android.package-archive
 
@@ -133,7 +133,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
+          asset_path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
           asset_name: ${{ github.event.ref }}-browser-x86-forkRelease.apk
           asset_content_type: application/vnd.android.package-archive
 
@@ -144,6 +144,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fenix/forkRelease/app-fenix-x86_64-forkRelease.apk
+          asset_path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86_64-forkRelease.apk
           asset_name: ${{ github.event.ref }}-browser-x86_64-forkRelease.apk
           asset_content_type: application/vnd.android.package-archive

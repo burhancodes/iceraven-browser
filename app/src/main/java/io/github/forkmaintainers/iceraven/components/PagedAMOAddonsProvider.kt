@@ -59,6 +59,8 @@ internal const val DEFAULT_READ_TIMEOUT_IN_SECONDS = 20L
 class PagedAMOAddonsProvider(
     private val context: Context,
     private val client: Client,
+    private val collectionUser: String = "",
+    private val collectionName: String = "",
     private val serverURL: String = DEFAULT_SERVER_URL,
     private val maxCacheAgeInMinutes: Long = -1,
 ) : AddonsProvider {
@@ -77,6 +79,9 @@ class PagedAMOAddonsProvider(
      * Get the account we should be fetching addons from.
      */
     private fun getCollectionAccount(): String {
+        if (collectionUser.isNotEmpty()) {
+            return collectionUser
+        }
         var result = context.settings().customAddonsAccount
         if (Config.channel.isNightlyOrDebug && context.settings()
                 .amoCollectionOverrideConfigured()
@@ -92,6 +97,9 @@ class PagedAMOAddonsProvider(
      * Get the collection name we should be fetching addons from.
      */
     private fun getCollectionName(): String {
+        if (collectionName.isNotEmpty()) {
+            return collectionName
+        }
         var result = context.settings().customAddonsCollection
         if (Config.channel.isNightlyOrDebug && context.settings()
                 .amoCollectionOverrideConfigured()

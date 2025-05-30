@@ -45,7 +45,6 @@ import mozilla.components.feature.addons.ui.AddonsManagerAdapterDelegate
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import org.mozilla.fenix.BrowserDirection
-import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
@@ -283,8 +282,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
                                 addonsManagerDelegate = managementView,
                                 addons = addons,
                                 style = createAddonStyle(requireContext()),
-                                excludedAddonIDs = emptyList(),
-                                store = requireComponents.core.store
+                                store = requireComponents.core.store,
                             )
                         }
                         binding?.addOnsProgressBar?.isVisible = false
