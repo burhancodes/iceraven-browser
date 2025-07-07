@@ -69,7 +69,6 @@ import mozilla.components.service.pocket.PocketStoriesService
 import mozilla.components.support.base.feature.ActivityResultHandler
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.UserInteractionOnBackPressedCallback
-import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.android.arch.lifecycle.addObservers
 import mozilla.components.support.ktx.android.content.call
 import mozilla.components.support.ktx.android.content.email
@@ -78,7 +77,7 @@ import mozilla.components.support.ktx.android.view.setupPersistentInsets
 import mozilla.components.support.locale.LocaleAwareAppCompatActivity
 import mozilla.components.support.utils.BootUtils
 import mozilla.components.support.utils.BrowsersCache
-import mozilla.components.support.utils.ManufacturerCodes
+import mozilla.components.support.utils.BuildManufacturerChecker
 import mozilla.components.support.utils.SafeIntent
 import mozilla.components.support.utils.toSafeIntent
 import mozilla.components.support.webextensions.WebExtensionPopupObserver
@@ -123,6 +122,7 @@ import org.mozilla.fenix.ext.setNavigationIcon
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.extension.WebExtensionPromptFeature
 import org.mozilla.fenix.home.HomeFragment
+import org.mozilla.fenix.home.TopSitesRefresher
 import org.mozilla.fenix.home.intent.AssistIntentProcessor
 import org.mozilla.fenix.home.intent.CrashReporterIntentProcessor
 import org.mozilla.fenix.home.intent.HomeDeepLinkIntentProcessor
@@ -442,7 +442,10 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
             // Unless the activity is recreated, navigate to home first (without rendering it)
             // to add it to the back stack.
             if (savedInstanceState == null) {
-                navigateToHome(navHost.navController)
+                val intent = intent.toSafeIntent()
+                val focusOnAddressBar = intent.getStringExtra(OPEN_TO_SEARCH) != null
+
+                navigateToHome(navHost.navController, focusOnAddressBar)
             }
 
             if (shouldNavigateToBrowserOnColdStart(savedInstanceState)) {
@@ -452,10 +455,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
                 maybeShowSetAsDefaultBrowserPrompt()
             } else {
                 StartOnHome.enterHomeScreen.record(NoExtras())
-            }
-
-            if (settings().showHomeOnboardingDialog && components.fenixOnboarding.userHasBeenOnboarded()) {
-                navHost.navController.navigate(NavGraphDirections.actionGlobalHomeOnboardingDialog())
             }
         }
 
@@ -495,6 +494,15 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
             extensionsProcessDisabledBackgroundController,
             serviceWorkerSupport,
             crashReporterBinding,
+            TopSitesRefresher(
+                settings = settings(),
+                topSitesProvider = if (settings().marsAPIEnabled) {
+                    components.core.marsTopSitesProvider
+                } else {
+                    components.core.contileTopSitesProvider
+                },
+            ),
+            components.privateBrowsingLockFeature,
         )
 
         if (!isCustomTabIntent(intent)) {
@@ -602,12 +610,16 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
             // This is to avoid disk read violations on some devices such as samsung and pixel for android 9/10
             components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
                 components.appStore.dispatch(AppAction.UpdateWasNativeDefaultBrowserPromptShown(true))
-                openSetDefaultBrowserOption().also {
-                    Metrics.setAsDefaultBrowserNativePromptShown.record()
-                    settings().setAsDefaultPromptCalled()
-                }
+                showSetDefaultBrowserPrompt()
+                Metrics.setAsDefaultBrowserNativePromptShown.record()
+                settings().setAsDefaultPromptCalled()
             }
         }
+    }
+
+    @VisibleForTesting
+    internal fun showSetDefaultBrowserPrompt() {
+        openSetDefaultBrowserOption()
     }
 
     /**
@@ -640,7 +652,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
     }
 
     @CallSuper
-    @Suppress("TooGenericExceptionCaught")
     override fun onResume() {
         super.onResume()
 
@@ -651,18 +662,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
         )
 
         lifecycleScope.launch(IO) {
-            try {
-                if (settings().showContileFeature) {
-                    if (settings().marsAPIEnabled) {
-                        components.core.marsTopSitesProvider.refreshTopSitesIfCacheExpired()
-                    } else {
-                        components.core.contileTopSitesProvider.refreshTopSitesIfCacheExpired()
-                    }
-                }
-            } catch (e: Exception) {
-                Logger.error("Failed to refresh contile top sites", e)
-            }
-
             if (settings().checkIfFenixIsDefaultBrowserOnAppResume()) {
                 if (components.appStore.state.wasNativeDefaultBrowserPromptShown) {
                     Metrics.defaultBrowserChangedViaNativeSystemPrompt.record(NoExtras())
@@ -691,18 +690,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
         components.core.store.dispatch(SearchAction.RefreshSearchEnginesAction)
     }
 
-    /**
-     * We verify if all conditions are met to display the unlock private mode screen
-     */
-    fun shouldShowUnlockScreen(): Boolean {
-        val hasPrivateTabs = components.core.store.state.privateTabs.isNotEmpty()
-        val biometricLockEnabled = settings().privateBrowsingLockedEnabled
-        val isPrivateMode = browsingModeManager.mode.isPrivate
-        val isScreenBlocked = settings().isPrivateScreenBlocked
-
-        return isPrivateMode && hasPrivateTabs && biometricLockEnabled && isScreenBlocked
-    }
-
     final override fun onStart() {
         // DO NOT MOVE ANYTHING ABOVE THIS getProfilerTime CALL.
         val startProfilerTime = components.core.engine.profiler?.getProfilerTime()
@@ -728,8 +715,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
         val startTimeProfiler = components.core.engine.profiler?.getProfilerTime()
 
         super.onStop()
-
-        settings().isPrivateScreenBlocked = true
 
         // Diagnostic breadcrumb for "Display already aquired" crash:
         // https://github.com/mozilla-mobile/android-components/issues/7960
@@ -995,7 +980,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
             Build.VERSION.SDK_INT == Build.VERSION_CODES.N || Build.VERSION.SDK_INT == Build.VERSION_CODES.N_MR1
         // Huawei devices seem to have problems with onKeyLongPress
         // See https://github.com/mozilla-mobile/fenix/issues/13498
-        return isAndroidN || ManufacturerCodes.isHuawei
+        return isAndroidN || BuildManufacturerChecker().isHuawei()
     }
 
     /**
@@ -1279,12 +1264,12 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
     }
 
     @VisibleForTesting
-    internal fun navigateToHome(navController: NavController) {
+    internal fun navigateToHome(navController: NavController, focusOnAddressBar: Boolean) {
         if (this is ExternalAppBrowserActivity) {
             return
         }
 
-        navController.navigate(NavGraphDirections.actionStartupHome())
+        navController.navigate(NavGraphDirections.actionStartupHome(focusOnAddressBar = focusOnAddressBar))
     }
 
     final override fun attachBaseContext(base: Context) {
@@ -1310,6 +1295,7 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
     private fun createBrowsingModeManager(initialMode: BrowsingMode): BrowsingModeManager {
         return DefaultBrowsingModeManager(initialMode, components.settings) { newMode ->
             updateSecureWindowFlags(newMode)
+            addPrivateHomepageTabIfNecessary(newMode)
             themeManager.currentTheme = newMode
         }.also {
             updateSecureWindowFlags(initialMode)
@@ -1321,6 +1307,22 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
             window.addFlags(FLAG_SECURE)
         } else {
             window.clearFlags(FLAG_SECURE)
+        }
+    }
+
+    /**
+     * When switching to private mode, add a private homepage tab if there are
+     * no private tabs available.
+     *
+     * @param mode The new [BrowsingMode] that is being swapped to.
+     */
+    @VisibleForTesting
+    internal fun addPrivateHomepageTabIfNecessary(mode: BrowsingMode) {
+        if (settings().enableHomepageAsNewTab &&
+            mode.isPrivate &&
+            components.core.store.state.privateTabs.isEmpty()
+        ) {
+            components.useCases.fenixBrowserUseCases.addNewHomepageTab(private = true)
         }
     }
 

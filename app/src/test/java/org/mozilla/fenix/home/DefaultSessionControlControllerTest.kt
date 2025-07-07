@@ -64,7 +64,6 @@ import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.ChecklistItem
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
@@ -76,7 +75,7 @@ import org.mozilla.fenix.messaging.MessageController
 import org.mozilla.fenix.onboarding.WallpaperOnboardingDialogFragment.Companion.THUMBNAILS_SELECTION_COUNT
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.utils.Settings
-import org.mozilla.fenix.utils.showAddSearchWidgetPrompt
+import org.mozilla.fenix.utils.maybeShowAddSearchWidgetPrompt
 import org.mozilla.fenix.wallpapers.Wallpaper
 import org.mozilla.fenix.wallpapers.WallpaperState
 import java.io.File
@@ -1540,15 +1539,14 @@ class DefaultSessionControlControllerTest {
 
     @Test
     fun `GIVEN item is a task WHEN onChecklistItemClicked is called THEN performs the expected actions`() {
-        mockkStatic("org.mozilla.fenix.ext.ActivityKt")
-        every { activity.openSetDefaultBrowserOption() } just Runs
+        every { activity.showSetDefaultBrowserPrompt() } just Runs
         val controller = createController()
         val task = mockk<ChecklistItem.Task>()
         every { task.type } returns ChecklistItem.Task.Type.SET_AS_DEFAULT
 
         controller.onChecklistItemClicked(task)
 
-        verify { activity.openSetDefaultBrowserOption() }
+        verify { activity.showSetDefaultBrowserPrompt() }
         verify { appStore.dispatch(AppAction.SetupChecklistAction.ChecklistItemClicked(task)) }
     }
 
@@ -1556,13 +1554,12 @@ class DefaultSessionControlControllerTest {
     fun `WHEN set as default task THEN navigationActionFor calls the set to default prompt`() {
         val controller = createController()
         val task = mockk<ChecklistItem.Task>()
-        mockkStatic("org.mozilla.fenix.ext.ActivityKt")
-        every { activity.openSetDefaultBrowserOption() } just Runs
+        every { activity.showSetDefaultBrowserPrompt() } just Runs
         every { task.type } returns ChecklistItem.Task.Type.SET_AS_DEFAULT
 
         controller.navigationActionFor(task)
 
-        verify { activity.openSetDefaultBrowserOption() }
+        verify { activity.showSetDefaultBrowserPrompt() }
     }
 
     @Test
@@ -1627,13 +1624,13 @@ class DefaultSessionControlControllerTest {
         val controller = createController()
         val task = mockk<ChecklistItem.Task>()
         mockkStatic("org.mozilla.fenix.utils.AddSearchWidgetPromptKt")
-        every { showAddSearchWidgetPrompt(activity) } just Runs
+        every { maybeShowAddSearchWidgetPrompt(activity) } just Runs
         every { task.type } returns ChecklistItem.Task.Type.INSTALL_SEARCH_WIDGET
 
         controller.navigationActionFor(task)
 
         verify {
-            showAddSearchWidgetPrompt(activity)
+            maybeShowAddSearchWidgetPrompt(activity)
         }
     }
 
@@ -1711,7 +1708,7 @@ class DefaultSessionControlControllerTest {
     ) = Wallpaper(
         name = "name",
         collection = Wallpaper.Collection(
-            name = Wallpaper.firefoxCollectionName,
+            name = Wallpaper.FIREFOX_COLLECTION,
             heading = null,
             description = null,
             availableLocales = null,
