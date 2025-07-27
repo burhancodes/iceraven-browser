@@ -6,13 +6,7 @@ package org.mozilla.fenix.components
 
 import android.app.Activity
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.withContext
-import org.mozilla.fenix.GleanMetrics.ReviewPrompt
 import org.mozilla.fenix.utils.Settings
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * Interface that describes the settings needed to track the Review Prompt.
@@ -43,9 +37,12 @@ class FenixReviewSettings(
  * Controls the Review Prompt behavior.
  */
 class ReviewPromptController(
+    private val playStoreReviewPromptController: PlayStoreReviewPromptController,
     private val reviewSettings: ReviewSettings,
     private val timeNowInMillis: () -> Long = { System.currentTimeMillis() },
-    private val tryPromptReview: suspend (Activity) -> Unit = { _ -> },
+    private val tryPromptReview: suspend (Activity) -> Unit = { activity ->
+        playStoreReviewPromptController.tryPromptReview(activity)
+    },
 ) {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     @Volatile
@@ -59,7 +56,6 @@ class ReviewPromptController(
     }
 
     fun trackApplicationLaunch() {
-        reviewSettings.numberOfAppLaunches = reviewSettings.numberOfAppLaunches + 1
         // We only want to show the the prompt after we've finished "launching" the application.
         reviewPromptIsReady = true
     }
@@ -85,49 +81,8 @@ class ReviewPromptController(
     }
 
     companion object {
-        private const val APPRX_MONTH_IN_MILLIS: Long = 1000L * 60L * 60L * 24L * 30L
-        private const val NUMBER_OF_LAUNCHES_REQUIRED = 5
-        private const val NUMBER_OF_MONTHS_TO_PASS = 4
+        const val APPRX_MONTH_IN_MILLIS: Long = 1000L * 60L * 60L * 24L * 30L
+        const val NUMBER_OF_LAUNCHES_REQUIRED = 5
+        const val NUMBER_OF_MONTHS_TO_PASS = 4
     }
-}
-
-/**
- * Records a [ReviewPrompt] with the required data.
- *
- * **Note:** The docs for [ReviewManager.launchReviewFlow] state 'In some circumstances the review
- * flow will not be shown to the user, e.g. they have already seen it recently, so do not assume that
- * calling this method will always display the review dialog.'
- * However, investigation has shown that a [ReviewInfo] instance with the flag:
- * - 'isNoOp=true' indicates that the prompt has NOT been displayed.
- * - 'isNoOp=false' indicates that a prompt has been displayed.
- * [ReviewManager.launchReviewFlow] will modify the ReviewInfo instance which can be used to determine
- * which of these flags is present.
- */
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-fun recordReviewPromptEvent(
-    reviewInfoAsString: String,
-    numberOfAppLaunches: Int,
-    now: Date,
-) {
-    val formattedLocalDatetime =
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(now)
-
-    // The internals of ReviewInfo cannot be accessed directly or cast nicely, so lets simply use
-    // the object as a string.
-    // ReviewInfo is susceptible to changes outside of our control hence the catch-all 'else' statement.
-    val promptWasDisplayed = if (reviewInfoAsString.contains("isNoOp=true")) {
-        "false"
-    } else if (reviewInfoAsString.contains("isNoOp=false")) {
-        "true"
-    } else {
-        "error"
-    }
-
-    ReviewPrompt.promptAttempt.record(
-        ReviewPrompt.PromptAttemptExtra(
-            promptWasDisplayed = promptWasDisplayed,
-            localDatetime = formattedLocalDatetime,
-            numberOfAppLaunches = numberOfAppLaunches,
-        ),
-    )
 }
