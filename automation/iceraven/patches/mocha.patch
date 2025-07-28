@@ -7,11 +7,11 @@ index 4cdb22b..59849b9 100644
  
      // Dark grey should primarily be used for the Dark theme and secondary buttons.
 -    val DarkGrey05 = Color(0xFF5B5B66)
-+    val DarkGrey05 = Color(0xFF45475A)
++    val DarkGrey05 = Color(0xFF313244)
      val DarkGrey05A43 = DarkGrey05.copy(alpha = 0.43f)
      val DarkGrey05A45 = Color(0x735B5B66)
 -    val DarkGrey10 = Color(0xFF52525E)
-+    val DarkGrey10 = Color(0xFF313244)
++    val DarkGrey10 = Color(0xFF1E1E2E)
      val DarkGrey20 = Color(0xFF4A4A55)
 -    val DarkGrey30 = Color(0xFF42414D)
 +    val DarkGrey30 = Color(0xFF313244)
