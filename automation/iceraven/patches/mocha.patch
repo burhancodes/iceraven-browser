@@ -14,7 +14,7 @@ index 4cdb22b..59849b9 100644
 +    val DarkGrey10 = Color(0xFF1E1E2E)
      val DarkGrey20 = Color(0xFF4A4A55)
 -    val DarkGrey30 = Color(0xFF42414D)
-+    val DarkGrey30 = Color(0xFF313244)
++    val DarkGrey30 = Color(0xFF1E1E2E)
      val DarkGrey30A95 = Color(0xF242414D)
      val DarkGrey30A96 = Color(0xF542414D)
      val DarkGrey40 = Color(0xFF3A3944)
