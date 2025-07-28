@@ -1,13 +1,14 @@
 diff --git a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-index 0fb1e0ab86..aad82cd82b 100644
+index 4cdb22b..59849b9 100644
 --- a/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
 +++ b/components/ui/colors/src/main/java/mozilla/components/ui/colors/PhotonColors.kt
-@@ -136,18 +136,18 @@ object PhotonColors {
+@@ -137,19 +137,19 @@ object PhotonColors {
      val LightGrey90 = Color(0xFF80808E)
  
      // Dark grey should primarily be used for the Dark theme and secondary buttons.
 -    val DarkGrey05 = Color(0xFF5B5B66)
 +    val DarkGrey05 = Color(0xFF45475A)
+     val DarkGrey05A43 = DarkGrey05.copy(alpha = 0.43f)
      val DarkGrey05A45 = Color(0x735B5B66)
 -    val DarkGrey10 = Color(0xFF52525E)
 +    val DarkGrey10 = Color(0xFF313244)
@@ -27,7 +28,7 @@ index 0fb1e0ab86..aad82cd82b 100644
      val DarkGrey90A40 = Color(0x6615141A)
      val DarkGrey90A50 = DarkGrey90.copy(alpha = 0.50f)
 diff --git a/components/ui/colors/src/main/res/values/photon_colors.xml b/components/ui/colors/src/main/res/values/photon_colors.xml
-index d68ba86fc0..0a7afb3b97 100644
+index d68ba86..f6cd92d 100644
 --- a/components/ui/colors/src/main/res/values/photon_colors.xml
 +++ b/components/ui/colors/src/main/res/values/photon_colors.xml
 @@ -148,15 +148,15 @@
@@ -98,10 +99,3 @@ index d68ba86fc0..0a7afb3b97 100644
  
  	<!-- Violet -->
  	<color name="photonViolet05">#ffE7DFFF</color>
-@@ -218,4 +218,4 @@
- 
- 	<!-- Black -->
- 	<color name="photonBlack">#000000</color>
--</resources>
-+</resources>
-\ No newline at end of file
