@@ -23,7 +23,7 @@ internal object TopSitesConfigConstants {
     /**
      * The maximum number of top sites to display.
      */
-    internal const val TOP_SITES_MAX_COUNT = 16
+    internal const val TOP_SITES_MAX_COUNT = 160
 
     /**
      * Sponsored top sites titles for Amazon used for filtering
