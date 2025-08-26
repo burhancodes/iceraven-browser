@@ -35,7 +35,6 @@ import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.autofill.AutofillConfirmActivity
 import org.mozilla.fenix.autofill.AutofillSearchActivity
 import org.mozilla.fenix.autofill.AutofillUnlockActivity
-import org.mozilla.fenix.browser.tabstrip.isTabStripEnabled
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.components.appstate.AppState
 import org.mozilla.fenix.components.appstate.setup.checklist.SetupChecklistState
@@ -90,6 +89,7 @@ class Components(private val context: Context) {
         BackgroundServices(
             context,
             push,
+            context.settings(),
             analytics.crashReporter,
             core.lazyHistoryStorage,
             core.lazyBookmarksStorage,
@@ -207,13 +207,6 @@ class Components(private val context: Context) {
     val settings by lazyMonitored { Settings(context) }
     val fenixOnboarding by lazyMonitored { FenixOnboarding(context) }
 
-    val reviewPromptController by lazyMonitored {
-        ReviewPromptController(
-            playStoreReviewPromptController = playStoreReviewPromptController,
-            reviewSettings = FenixReviewSettings(settings),
-        )
-    }
-
     val playStoreReviewPromptController by lazyMonitored {
         PlayStoreReviewPromptController(
             manager = ReviewManagerFactory.create(context),
@@ -294,7 +287,7 @@ class Components(private val context: Context) {
             checklistItems = getSetupChecklistCollection(
                 settings = settings,
                 collection = type,
-                tabStripEnabled = context.isTabStripEnabled(),
+                tabStripEnabled = settings.isTabStripEnabled,
             ),
         )
     } else {

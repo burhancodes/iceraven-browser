@@ -351,7 +351,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
     }
 
     @VisibleForTesting
-    internal fun provideAddonManger(): AddonManager {
+    internal fun provideAddonManager(): AddonManager {
         return requireContext().components.addonManager
     }
 
@@ -367,7 +367,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
             )
         }
 
-        val installOperation = provideAddonManger().installAddon(
+        val installOperation = provideAddonManager().installAddon(
             url = addon.downloadUrl,
             installationMethod = InstallationMethod.MANAGER,
             onSuccess = {

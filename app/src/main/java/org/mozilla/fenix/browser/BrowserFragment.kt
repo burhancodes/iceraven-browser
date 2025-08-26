@@ -38,9 +38,7 @@ import org.mozilla.fenix.GleanMetrics.NavigationBar
 import org.mozilla.fenix.GleanMetrics.ReaderMode
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.store.BrowserScreenAction.ReaderModeStatusUpdated
-import org.mozilla.fenix.browser.tabstrip.isTabStripEnabled
 import org.mozilla.fenix.components.TabCollectionStorage
-import org.mozilla.fenix.components.appstate.AppAction.SnackbarAction
 import org.mozilla.fenix.components.toolbar.BrowserToolbarComposable
 import org.mozilla.fenix.components.toolbar.BrowserToolbarView
 import org.mozilla.fenix.components.toolbar.FenixBrowserToolbarView
@@ -88,7 +86,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         val context = requireContext()
         val components = context.components
 
-        if (!context.isTabStripEnabled() && context.settings().isSwipeToolbarToSwitchTabsEnabled) {
+        if (!context.settings().isTabStripEnabled && context.settings().isSwipeToolbarToSwitchTabsEnabled) {
             binding.gestureLayout.addGestureListener(
                 ToolbarGestureHandler(
                     activity = requireActivity(),
@@ -162,7 +160,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
     private fun initSharePageAction(context: Context) {
         // Only adding share page action if tab strip is disabled.
-        if (!context.isTabStripEnabled() && isLargeWindow()) {
+        if (!context.settings().isTabStripEnabled && isLargeWindow()) {
             val sharePageAction = BrowserToolbar.createShareBrowserAction(
                 context = context,
             ) {
@@ -207,6 +205,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         translationsBinding.set(
             feature = TranslationsBinding(
                 browserStore = context.components.core.store,
+                appStore = context.components.appStore,
                 onTranslationStatusUpdate = {
                     translationsAvailable = it.isTranslationPossible
 
@@ -229,10 +228,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                         )
 
                         safeInvalidateBrowserToolbarView()
-                    }
-
-                    if (!it.isTranslateProcessing) {
-                        requireComponents.appStore.dispatch(SnackbarAction.SnackbarDismissed)
                     }
                 },
                 onShowTranslationsDialog = browserToolbarInteractor::onTranslationsButtonClicked,
@@ -262,11 +257,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
     }
 
     private fun initTranslationsUpdates(context: Context, view: View) {
-        // Do not add translation page action if device doesn't have large window
-        if (!isLargeWindow()) {
-            return
-        }
-
         if (!FxNimbus.features.translations.value().mainFlowToolbarEnabled) return
 
         translationsBinding.set(
@@ -274,6 +264,10 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 browserStore = context.components.core.store,
                 browserScreenStore = browserScreenStore,
                 appStore = context.components.appStore,
+                onTranslationStatusUpdate = {
+                    translationsAvailable = it.isTranslationPossible
+                },
+                onShowTranslationsDialog = browserToolbarInteractor::onTranslationsButtonClicked,
                 navController = findNavController(),
             ),
             owner = this,
@@ -653,22 +647,17 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             tabSize: Int,
             isNewCollection: Boolean = false,
         ) {
+            val messageResId = when {
+                isNewCollection -> R.string.create_collection_tabs_saved_new_collection
+                tabSize == 1 -> R.string.create_collection_tab_saved
+                else -> return // Don't show snackbar for multiple tabs
+            }
+
             view?.let {
-                val messageStringRes = when {
-                    isNewCollection -> {
-                        R.string.create_collection_tabs_saved_new_collection
-                    }
-                    tabSize > 1 -> {
-                        R.string.create_collection_tabs_saved
-                    }
-                    else -> {
-                        R.string.create_collection_tab_saved
-                    }
-                }
                 Snackbar.make(
                     snackBarParentView = binding.dynamicSnackbarContainer,
                     snackbarState = SnackbarState(
-                        message = getString(messageStringRes),
+                        message = getString(messageResId),
                     ),
                 ).show()
             }
