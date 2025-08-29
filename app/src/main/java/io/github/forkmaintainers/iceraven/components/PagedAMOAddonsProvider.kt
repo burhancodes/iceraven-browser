@@ -9,11 +9,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.AtomicFile
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import mozilla.components.concept.fetch.Client
 import mozilla.components.concept.fetch.Request
 import mozilla.components.concept.fetch.isSuccess
@@ -25,11 +27,13 @@ import mozilla.components.support.ktx.kotlin.sanitizeURL
 import mozilla.components.support.ktx.util.readAndDeserialize
 import mozilla.components.support.ktx.util.writeString
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.ext.settings
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
@@ -37,6 +41,8 @@ import java.util.concurrent.TimeUnit
 
 internal const val API_VERSION = "api/v4"
 internal const val DEFAULT_SERVER_URL = "https://services.addons.mozilla.org"
+
+
 internal const val COLLECTION_FILE_NAME_PREFIX = "%s_components_addon_collection"
 internal const val COLLECTION_FILE_NAME = "%s_components_addon_collection_%s.json"
 internal const val COLLECTION_FILE_NAME_WITH_LANGUAGE = "%s_components_addon_collection_%s_%s.json"
@@ -54,15 +60,17 @@ internal const val DEFAULT_READ_TIMEOUT_IN_SECONDS = 20L
  * @property maxCacheAgeInMinutes maximum time (in minutes) the cached featured add-ons
  * should remain valid before a refresh is attempted. Defaults to -1, meaning no cache
  * is being used by default
+ * @property ioDispatcher Coroutine dispatcher for IO operations.
  */
-@Suppress("LongParameterList")
 class PagedAMOAddonsProvider(
     private val context: Context,
     private val client: Client,
     private val collectionUser: String = "",
     private val collectionName: String = "",
     private val serverURL: String = DEFAULT_SERVER_URL,
+    private val sortOption: SortOption = SortOption.POPULARITY_DESC,
     private val maxCacheAgeInMinutes: Long = -1,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AddonsProvider {
 
     private val logger = Logger("PagedAddonCollectionProvider")
@@ -74,42 +82,6 @@ class PagedAMOAddonsProvider(
     // Acts as an in-memory cache for the fetched addon's icons.
     @VisibleForTesting
     internal val iconsCache = ConcurrentHashMap<String, Bitmap>()
-
-    /**
-     * Get the account we should be fetching addons from.
-     */
-    private fun getCollectionAccount(): String {
-        if (collectionUser.isNotEmpty()) {
-            return collectionUser
-        }
-        var result = context.settings().customAddonsAccount
-        if (Config.channel.isNightlyOrDebug && context.settings()
-                .amoCollectionOverrideConfigured()
-        ) {
-            result = context.settings().overrideAmoUser
-        }
-
-        logger.info("Determined collection account: $result")
-        return result
-    }
-
-    /**
-     * Get the collection name we should be fetching addons from.
-     */
-    private fun getCollectionName(): String {
-        if (collectionName.isNotEmpty()) {
-            return collectionName
-        }
-        var result = context.settings().customAddonsCollection
-        if (Config.channel.isNightlyOrDebug && context.settings()
-                .amoCollectionOverrideConfigured()
-        ) {
-            result = context.settings().overrideAmoCollection
-        }
-
-        logger.info("Determined collection name: $result")
-        return result
-    }
 
     /**
      * Interacts with the collections endpoint to provide a list of available
@@ -137,7 +109,7 @@ class PagedAMOAddonsProvider(
         allowCache: Boolean,
         readTimeoutInSeconds: Long?,
         language: String?,
-    ): List<Addon> {
+    ): List<Addon> = withContext(ioDispatcher) {
         // We want to make sure we always use useFallbackFile = false here, as it warranties
         // that we are trying to fetch the latest localized add-ons when the user changes
         // language from the previous one.
@@ -149,36 +121,32 @@ class PagedAMOAddonsProvider(
 
         val collectionAccount = getCollectionAccount()
         val collectionName = getCollectionName()
-
         if (cachedFeaturedAddons != null) {
             logger.info("Providing cached list of addons for $collectionAccount collection $collectionName")
-            return cachedFeaturedAddons
+            return@withContext cachedFeaturedAddons
         }
         logger.info("Fetching fresh list of addons for $collectionAccount collection $collectionName")
-        val langParam = if (!language.isNullOrEmpty()) {
-            "?lang=$language"
-        } else {
-            ""
-        }
-        return getAllPages(
-            listOf(
-                serverURL,
-                API_VERSION,
-                "accounts/account",
-                collectionAccount,
-                "collections",
-                collectionName,
-                "addons",
-                langParam,
-            ).joinToString("/"),
-            readTimeoutInSeconds ?: DEFAULT_READ_TIMEOUT_IN_SECONDS,
-        ).also {
-            // Cache the JSON object before we parse out the addons
-            if (maxCacheAgeInMinutes > 0) {
-                writeToDiskCache(it.toString(), language)
+
+        return@withContext try {
+            fetchFeaturedAddons(readTimeoutInSeconds, language)
+        } catch (e: IOException) {
+            logger.error("Failed to fetch available add-ons", e)
+            if (allowCache) {
+                val cacheLastUpdated = getCacheLastUpdated(context, language, useFallbackFile = true)
+                if (cacheLastUpdated > -1) {
+                    val cache = readFromDiskCache(language, useFallbackFile = true)
+                    cache?.let {
+                        logger.info(
+                            "Falling back to available add-ons cache from ${
+                                SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US).format(cacheLastUpdated)
+                            }",
+                        )
+                        return@withContext it
+                    }
+                }
             }
-            deleteUnusedCacheFiles(language)
-        }.getAddonsFromCollection(language).loadIcons()
+            throw e
+        }
     }
 
     /**
@@ -186,13 +154,36 @@ class PagedAMOAddonsProvider(
      * field in the returned JSON) and combines the "results" arrays into that
      * of the first page. Returns that coalesced object.
      *
-     * @param url URL of the first page to fetch
      * @param readTimeoutInSeconds timeout in seconds to use when fetching each page.
+     * @param language indicates in which language the translatable fields should be in, if no
+     * matching language is found then a fallback translation is returned using the default language.
+     * When it is null all translations available will be returned.
      * @throws IOException if the request failed, or could not be executed due to cancellation,
      * a connectivity problem or a timeout.
      */
     @Throws(IOException::class)
-    fun getAllPages(url: String, readTimeoutInSeconds: Long): JSONObject {
+    private suspend fun fetchFeaturedAddons(
+        readTimeoutInSeconds: Long?,
+        language: String?,
+    ): List<Addon> = withContext(ioDispatcher) {
+        val langParam = if (!language.isNullOrEmpty()) {
+            "&lang=$language"
+        } else {
+            ""
+        }
+        val collectionAccount = getCollectionAccount()
+        val collectionName = getCollectionName()
+        var url = listOf(
+            serverURL,
+            API_VERSION,
+            "accounts/account",
+            collectionAccount,
+            "collections",
+            collectionName,
+            "addons",
+            "?sort=${sortOption.value}",
+            langParam,
+        ).joinToString("/")
         // Fetch and compile all the pages into one object we can return
         var compiledResponse = JSONObject()
         // Each page tells us where to get the next page, if there is one
@@ -202,7 +193,8 @@ class PagedAMOAddonsProvider(
             client.fetch(
                 Request(
                     url = nextURL,
-                    readTimeout = Pair(readTimeoutInSeconds, TimeUnit.SECONDS),
+                    readTimeout = Pair(readTimeoutInSeconds ?: DEFAULT_READ_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS),
+                    conservative = false,
                 ),
             )
                 .use { response ->
@@ -217,13 +209,27 @@ class PagedAMOAddonsProvider(
                         }
                         nextURL = if (currentResponse.isNull("next")) null else currentResponse.getString("next")
                     } else {
-                        val errorMessage = "Failed to fetch featured add-ons from collection. " + "Status code: ${response.status}"
+                        val errorMessage = "Failed to fetch featured add-ons from collection. " +
+                            "Status code: ${response.status}"
                         logger.error(errorMessage)
                         throw IOException(errorMessage)
                     }
                 }
         }
-        return compiledResponse
+        return@withContext try {
+            compiledResponse
+                .getAddonsFromCollection(language)
+                .loadIcons()
+                .also {
+                    // Cache the JSON object before we parse out the addons
+                    if (maxCacheAgeInMinutes > 0) {
+                        writeToDiskCache(it.toString(), language)
+                    }
+                    deleteUnusedCacheFiles(language)
+                }
+        } catch (e: JSONException) {
+            throw IOException(e)
+        }
     }
 
     /**
@@ -241,7 +247,7 @@ class PagedAMOAddonsProvider(
         } else {
             try {
                 logger.info("Trying to fetch the icon for $addonId from the network")
-                client.fetch(Request(url = iconUrl.sanitizeURL(), useCaches = true))
+                client.fetch(Request(url = iconUrl.sanitizeURL(), useCaches = true, conservative = true))
                     .use { response ->
                         if (response.isSuccess) {
                             response.body.useStream {
@@ -280,15 +286,18 @@ class PagedAMOAddonsProvider(
     internal fun writeToDiskCache(collectionResponse: String, language: String?) {
         logger.info("Storing cache file")
         synchronized(diskCacheLock) {
-            getCacheFile(context, language, useFallbackFile = false, ).writeString { collectionResponse }
+            getCacheFile(context, language, useFallbackFile = false).writeString { collectionResponse }
         }
     }
 
     @VisibleForTesting
-    internal fun readFromDiskCache(language: String?, useFallbackFile: Boolean): List<Addon>? {
+    internal suspend fun readFromDiskCache(
+        language: String?,
+        useFallbackFile: Boolean,
+    ): List<Addon>? = withContext(ioDispatcher) {
         logger.info("Loading cache file")
         synchronized(diskCacheLock) {
-            return getCacheFile(context, language, useFallbackFile).readAndDeserialize {
+            return@withContext getCacheFile(context, language, useFallbackFile).readAndDeserialize {
                 JSONObject(it).getAddonsFromCollection(language)
             }
         }
@@ -362,6 +371,42 @@ class PagedAMOAddonsProvider(
         return fileName.sanitizeFileName()
     }
 
+    /**
+     * Get the collection name we should be fetching addons from.
+     */
+    @VisibleForTesting
+    internal fun getCollectionName(): String {
+        if (collectionName.isNotEmpty()) {
+            return collectionName
+        }
+        var result = context.settings().customAddonsCollection
+        if (Config.channel.isNightlyOrDebug && context.settings()
+                .amoCollectionOverrideConfigured()
+        ) {
+            result = context.settings().overrideAmoCollection
+        }
+        logger.info("Determined collection name: $result")
+        return result
+    }
+
+    /**
+     * Get the account we should be fetching addons from.
+     */
+    @VisibleForTesting
+    internal fun getCollectionAccount(): String {
+        if (collectionUser.isNotEmpty()) {
+            return collectionUser
+        }
+        var result = context.settings().customAddonsAccount
+        if (Config.channel.isNightlyOrDebug && context.settings()
+                .amoCollectionOverrideConfigured()
+        ) {
+            result = context.settings().overrideAmoUser
+        }
+        logger.info("Determined collection account: $result")
+        return result
+    }
+
     fun deleteCacheFile() {
         logger.info("Clearing cache file")
         synchronized(diskCacheLock) {
@@ -423,12 +468,12 @@ internal fun JSONObject.toAddon(language: String? = null): Addon {
             ratingUrl = getSafeString("ratings_url"),
             detailUrl = getSafeString("url"),
             defaultLocale = (
-                    if (!safeLanguage.isNullOrEmpty() && isLanguageInTranslations) {
-                        safeLanguage
-                    } else {
-                        getSafeString("default_locale").ifEmpty { Addon.DEFAULT_LOCALE }
-                    }
-                    ).lowercase(Locale.ROOT),
+                if (!safeLanguage.isNullOrEmpty() && isLanguageInTranslations) {
+                    safeLanguage
+                } else {
+                    getSafeString("default_locale").ifEmpty { Addon.DEFAULT_LOCALE }
+                }
+                ).lowercase(Locale.ROOT),
         )
     }
 }
@@ -437,7 +482,7 @@ internal fun JSONObject.getRating(): Addon.Rating? {
     val jsonRating = optJSONObject("ratings")
     return if (jsonRating != null) {
         Addon.Rating(
-            reviews = jsonRating.optInt("count"),
+            reviews = jsonRating.optInt("text_count"),
             average = jsonRating.optDouble("average").toFloat(),
         )
     } else {

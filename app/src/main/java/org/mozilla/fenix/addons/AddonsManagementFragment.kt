@@ -98,7 +98,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
                             requireComponents.intentProcessors.addonInstallIntentProcessor.installExtension(
                                 extURI,
                                 onSuccess = {
-                                    val installedState = provideAddonManger().toInstalledState(it)
+                                    val installedState = provideAddonManager().toInstalledState(it)
                                     val ao = Addon.newFromWebExtension(it, installedState)
                                     runIfFragmentIsAttached {
                                         adapter?.updateAddon(ao)
