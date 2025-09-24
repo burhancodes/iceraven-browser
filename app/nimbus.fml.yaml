@@ -472,6 +472,13 @@ features:
           When the feature is enabled the user will see a new composable toolbar instead the previous View based one.
         type: Boolean
         default: false
+    defaults:
+      - channel: nightly
+        value:
+          enabled: true
+      - channel: developer
+        value:
+          enabled: true
 
   remote-tab-management:
     description: >
@@ -861,7 +868,7 @@ features:
         description: >
           When `true`, include DoH settings in the settings UI.
         type: Boolean
-        default: false
+        default: true
       autoselect-enabled:
         description: >
           Controls the network.android_doh.autoselect_enabled pref and automatically chooses a DoH provider when Default Protection mode is selected.
@@ -876,6 +883,21 @@ features:
           Whether or not to enable private browsing mode lock.
         type: Boolean
         default: true
+
+  app-icon-selection:
+    description: Allows the user to set an alternative app launcher icon.
+    variables:
+      enabled:
+        description: Whether or not the feature is available for the user.
+        type: Boolean
+        default: false
+    defaults:
+      - channel: developer
+        value:
+          enabled: true
+      - channel: nightly
+        value:
+          enabled: true
 
   toolbar-redesign-option:
     description: Control the visibility of toolbar redesign option in settings.
@@ -920,6 +942,22 @@ features:
       - channel: developer
         value:
           enabled: true
+
+  suppress-sponsored-top-sites:
+    description: Suppress sponsored top sites for new users for 14 days.
+    variables:
+      enabled:
+        description: If true, new users won’t see sponsored tiles for 14 days.
+        type: Boolean
+        default: false
+
+  custom-review-prompt:
+    description: Feature that controls the Play store in-app custom review prompt.
+    variables:
+      enabled:
+        description: Whether or not to enable the custom review prompt.
+        type: Boolean
+        default: false
 
 types:
   objects:

@@ -8,6 +8,7 @@ import android.content.Context
 import android.os.RemoteException
 import androidx.annotation.VisibleForTesting
 import mozilla.components.support.base.log.logger.Logger
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.settings
 
 const val GCLID_PREFIX = "gclid="

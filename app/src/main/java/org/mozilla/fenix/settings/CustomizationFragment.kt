@@ -155,6 +155,8 @@ class CustomizationFragment : PreferenceFragmentCompat() {
                     Position.TOP.name,
                 ),
             )
+
+            updateToolbarLayoutIcons()
         }
 
         val bottomPreference = requirePreference<RadioButtonPreference>(R.string.pref_key_toolbar_bottom)
@@ -164,6 +166,8 @@ class CustomizationFragment : PreferenceFragmentCompat() {
                     Position.BOTTOM.name,
                 ),
             )
+
+            updateToolbarLayoutIcons()
         }
 
         val toolbarPosition = requireContext().settings().toolbarPosition
@@ -202,8 +206,19 @@ class CustomizationFragment : PreferenceFragmentCompat() {
     private fun setupToolbarLayout() {
         val settings = requireContext().settings()
         (requirePreference(R.string.pref_key_customization_category_toolbar_layout) as PreferenceCategory).apply {
-            isVisible = Config.channel.isDebug && settings.shouldUseComposableToolbar && settings.toolbarRedesignEnabled
-            isEnabled = !settings.isTabStripEnabled
+            isVisible = Config.channel.isNightlyOrDebug &&
+                settings.shouldUseComposableToolbar && settings.toolbarRedesignEnabled
+        }
+        updateToolbarLayoutIcons()
+    }
+
+    private fun updateToolbarLayoutIcons() {
+        (requirePreference(R.string.pref_key_toolbar_expanded) as ToggleRadioButtonPreference).apply {
+            if (requireContext().settings().shouldUseBottomToolbar) {
+                updateIcon(R.drawable.ic_toolbar_bottom_expanded, R.drawable.ic_toolbar_bottom_simple)
+            } else {
+                updateIcon(R.drawable.ic_toolbar_top_expanded, R.drawable.ic_toolbar_top_simple)
+            }
         }
     }
 
@@ -272,7 +287,7 @@ class CustomizationFragment : PreferenceFragmentCompat() {
 
     private fun setupAppIconCategory() {
         requirePreference<PreferenceCategory>(R.string.pref_key_customization_category_app_icon).apply {
-           isVisible = FeatureFlags.alternativeAppIconFeatureEnabled
+           isVisible = context.settings().appIconSelection
         }
     }
 

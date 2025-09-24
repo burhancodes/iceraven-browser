@@ -13,7 +13,6 @@ import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.GleanMetrics.MetaAttribution
 import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.PlayStoreAttribution
-import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.utils.Settings
 import java.io.UnsupportedEncodingException
