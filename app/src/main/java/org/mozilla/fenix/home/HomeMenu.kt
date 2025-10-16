@@ -33,6 +33,7 @@ import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.theme.ThemeManager
 import org.mozilla.fenix.whatsnew.WhatsNew
+import mozilla.components.ui.icons.R as iconsR
 
 @Suppress("LargeClass", "LongMethod")
 class HomeMenu(
@@ -90,7 +91,7 @@ class HomeMenu(
     private val quitItem by lazy {
         BrowserMenuImageText(
             context.getString(R.string.delete_browsing_data_on_quit_action),
-            R.drawable.mozac_ic_cross_circle_24,
+            iconsR.drawable.mozac_ic_cross_circle_24,
             primaryTextColor,
         ) {
             onItemTapped.invoke(Item.Quit)
@@ -133,7 +134,7 @@ class HomeMenu(
 
         val passwordsItem = BrowserMenuImageText(
             context.getString(R.string.preferences_sync_logins_2),
-            R.drawable.mozac_ic_login_24,
+            iconsR.drawable.mozac_ic_login_24,
             primaryTextColor,
         ) {
             onItemTapped.invoke(Item.Passwords)
@@ -161,7 +162,7 @@ class HomeMenu(
 
         val helpItem = BrowserMenuImageText(
             context.getString(R.string.browser_menu_help),
-            R.drawable.mozac_ic_help_circle_24,
+            iconsR.drawable.mozac_ic_help_circle_24,
             primaryTextColor,
         ) {
             onItemTapped.invoke(Item.Help)
@@ -180,7 +181,7 @@ class HomeMenu(
         val nimbusValidation = FxNimbus.features.nimbusValidation.value()
         val settingsItem = BrowserMenuImageText(
             nimbusValidation.settingsTitle,
-            R.drawable.mozac_ic_settings_24,
+            iconsR.drawable.mozac_ic_settings_24,
             primaryTextColor,
         ) {
             onItemTapped.invoke(Item.Settings)
