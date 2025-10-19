@@ -33,62 +33,12 @@ class PlayStoreReviewPromptController(
     /**
      * Launch the in-app review flow, unless we've hit the quota.
      */
-    suspend fun tryPromptReview(activity: Activity) {
-        logger.info("tryPromptReview in progress...")
-        val reviewInfoFlow = withContext(Dispatchers.IO) { manager.requestReviewFlow() }
-
-        reviewInfoFlow.addOnCompleteListener {
-            val resultString = if (it.isSuccessful) {
-                logger.info("Review flow launched.")
-                // Launch the in-app flow.
-                manager.launchReviewFlow(activity, it.result)
-
-                it.result.toString()
-            } else {
-                // Launch the Play store flow.
-                val reviewErrorCode =
-                    (it.exception as? ReviewException)?.errorCode ?: ERROR_CODE_UNEXPECTED
-                logger.warn("Failed to launch in-app review flow due to: $reviewErrorCode .")
-
-                tryLaunchPlayStoreReview(activity)
-
-                "reviewErrorCode=$reviewErrorCode"
-            }
-
-            recordReviewPromptEvent(
-                reviewInfoAsString = resultString,
-                numberOfAppLaunches = numberOfAppLaunches(),
-                now = Date(),
-            )
-        }
-
-        logger.info("tryPromptReview completed.")
-    }
+    suspend fun tryPromptReview(activity: Activity) {}
 
     /**
      * Try to launch the play store review flow.
      */
-    fun tryLaunchPlayStoreReview(activity: Activity) {
-        logger.info("tryLaunchPlayStoreReview in progress...")
-
-        try {
-            logger.info("Navigating to Play store listing.")
-            activity.startActivity(
-                Intent(Intent.ACTION_VIEW, SupportUtils.RATE_APP_URL.toUri()),
-            )
-        } catch (e: ActivityNotFoundException) {
-            // Device without the play store installed.
-            // Opening the play store website.
-            (activity as HomeActivity).openToBrowserAndLoad(
-                searchTermOrURL = SupportUtils.FENIX_PLAY_STORE_URL,
-                newTab = true,
-                from = BrowserDirection.FromGlobal,
-            )
-            logger.warn("Failed to launch play store review flow due to: $e .")
-        }
-
-        logger.info("tryLaunchPlayStoreReview completed.")
-    }
+    fun tryLaunchPlayStoreReview(activity: Activity) {}
 
     companion object {
         /**
