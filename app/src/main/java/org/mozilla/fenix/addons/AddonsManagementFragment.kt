@@ -49,6 +49,7 @@ import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentAddOnsManagementBinding
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
 import org.mozilla.fenix.ext.showToolbar
@@ -83,11 +84,6 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
         binding = FragmentAddOnsManagementBinding.bind(view)
         bindRecyclerView()
         setupMenu()
-        (activity as HomeActivity).webExtensionPromptFeature.onAddonChanged = {
-            runIfFragmentIsAttached {
-                adapter?.updateAddon(it)
-            }
-        }
         addonImportFilePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if(result.resultCode == Activity.RESULT_OK) {
@@ -241,7 +237,6 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
         // letting go of the resources to avoid memory leak.
         adapter = null
         binding = null
-        (activity as HomeActivity).webExtensionPromptFeature.onAddonChanged = {}
     }
 
     private fun bindRecyclerView() {
@@ -252,12 +247,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
             onInstallButtonClicked = ::installAddon,
             onMoreAddonsButtonClicked = ::openAMO,
             onLearnMoreClicked = { link, addon ->
-                openLearnMoreLink(
-                    activity as HomeActivity,
-                    link,
-                    addon,
-                    BrowserDirection.FromAddonsManagementFragment,
-                )
+                binding?.root?.openLearnMoreLink(link, addon)
             },
         )
 
@@ -392,10 +382,12 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
     }
 
     private fun openAMO() {
-        openLinkInNewTab(
-            activity as HomeActivity,
-            AMO_HOMEPAGE_FOR_ANDROID,
-            BrowserDirection.FromAddonsManagementFragment,
+        findNavController().openToBrowser()
+        val isPrivate = requireComponents.appStore.state.mode.isPrivate
+        requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
+            searchTermOrURL = AMO_HOMEPAGE_FOR_ANDROID,
+            newTab = true,
+            private = isPrivate,
         )
     }
 }

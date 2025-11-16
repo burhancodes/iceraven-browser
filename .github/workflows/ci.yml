@@ -82,12 +82,6 @@ jobs:
           path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-armeabi-v7a-forkRelease.apk
           name: ${{ env.VERSION_NAME }}-browser-armeabi-v7a-forkRelease.apk
 
-      - name: Upload x86 apk
-        uses: actions/upload-artifact@v4
-        with:
-          path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
-          name: ${{ env.VERSION_NAME }}-browser-x86-forkRelease.apk
-
       - name: Upload x86_64 apk
         uses: actions/upload-artifact@v4
         with:

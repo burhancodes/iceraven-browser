@@ -41,6 +41,7 @@ class MarketingAttributionService(private val context: Context) {
      */
     companion object {
         private val marketingPrefixes = listOf(GCLID_PREFIX, ADJUST_REFTAG_PREFIX)
+        var response: String? = null
 
         @VisibleForTesting
         internal fun shouldShowMarketingOnboarding(installReferrerResponse: String?): Boolean {

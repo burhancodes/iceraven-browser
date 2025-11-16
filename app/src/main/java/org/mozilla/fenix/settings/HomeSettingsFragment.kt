@@ -38,7 +38,6 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences() {
         requirePreference<SwitchPreference>(R.string.pref_key_show_top_sites).apply {
-            isVisible = requireContext().settings().showHomepageTopSitesSectionToggle
             isChecked = context.settings().showTopSitesFeature
             onPreferenceChangeListener = object : SharedPreferenceUpdater() {
                 override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
