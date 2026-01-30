@@ -77,6 +77,8 @@ internal sealed class BookmarksListSortOrder {
  * @property bookmarksSelectFolderState State representing the select folder subscreen, if visible.
  * @property bookmarksEditFolderState State representing the edit folder subscreen, if visible.
  * @property bookmarksMultiselectMoveState State representing multi-select moving.
+ * @property bookmarksDeletionSnackbarQueueCount State representing the number of queued deletions before a
+ * snack bar dismiss.
  * @property isLoading State representing if the initial load has completed.
  * @property isSearching State representing if currently in search mode.
  */
@@ -96,6 +98,7 @@ internal data class BookmarksState(
     val bookmarksSelectFolderState: BookmarksSelectFolderState?,
     val bookmarksEditFolderState: BookmarksEditFolderState?,
     val bookmarksMultiselectMoveState: MultiselectMoveState?,
+    val bookmarksDeletionSnackbarQueueCount: Int,
     val isLoading: Boolean,
     val isSearching: Boolean,
 ) : State {
@@ -120,6 +123,7 @@ internal data class BookmarksState(
             bookmarksSelectFolderState = null,
             bookmarksEditFolderState = null,
             bookmarksMultiselectMoveState = null,
+            bookmarksDeletionSnackbarQueueCount = 0,
             isLoading = true,
             isSearching = false,
         )
@@ -134,7 +138,7 @@ internal fun BookmarksState.undoSnackbarText(): Pair<Int, String> = bookmarksSna
             stringId to (title ?: "error")
         }
         state is BookmarksSnackbarState.UndoDeletion -> {
-            val stringId = R.string.bookmark_deletion_multiple_snackbar_message_2
+            val stringId = R.string.bookmark_delete_multiple_items
             val numberOfBookmarks = "${state.guidsToDelete.size}"
             stringId to numberOfBookmarks
         }
@@ -208,6 +212,7 @@ internal fun BookmarksSnackbarState.addGuidsToDelete(guids: List<String>) = when
 internal data class BookmarksEditBookmarkState(
     val bookmark: BookmarkItem.Bookmark,
     val folder: BookmarkItem.Folder,
+    val edited: Boolean = false,
 )
 
 internal data class BookmarksAddFolderState(

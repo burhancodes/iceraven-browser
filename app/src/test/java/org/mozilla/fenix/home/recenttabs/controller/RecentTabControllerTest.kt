@@ -10,16 +10,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import mozilla.components.browser.state.action.TabListAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.LastMediaAccessState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.robolectric.testContext
-import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -33,12 +30,8 @@ import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.utils.Settings
 import org.robolectric.RobolectricTestRunner
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class RecentTabControllerTest {
-
-    @get:Rule
-    val coroutinesTestRule = MainCoroutineRule()
 
     @get:Rule
     val gleanTestRule = FenixGleanTestRule(testContext)
@@ -79,8 +72,8 @@ class RecentTabControllerTest {
             url = "https://mozilla.org",
             title = "Mozilla",
         )
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
-        store.dispatch(TabListAction.SelectTabAction(tab.id)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
+        store.dispatch(TabListAction.SelectTabAction(tab.id))
 
         controller.handleRecentTabClicked(tab.id)
 
@@ -105,8 +98,8 @@ class RecentTabControllerTest {
             lastMediaAccessState = LastMediaAccessState("https://mozilla.com", 123, true),
         )
 
-        store.dispatch(TabListAction.AddTabAction(inProgressMediaTab)).joinBlocking()
-        store.dispatch(TabListAction.SelectTabAction(inProgressMediaTab.id)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(inProgressMediaTab))
+        store.dispatch(TabListAction.SelectTabAction(inProgressMediaTab.id))
 
         controller.handleRecentTabClicked(inProgressMediaTab.id)
 

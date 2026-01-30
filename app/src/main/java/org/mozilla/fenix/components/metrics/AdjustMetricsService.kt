@@ -24,53 +24,7 @@ class AdjustMetricsService(private val application: Application) : MetricsServic
     override val type = MetricServiceType.Marketing
     private val logger = Logger("AdjustMetricsService")
 
-    override fun start() {
-        val settings = application.components.settings
-        if ((BuildConfig.ADJUST_TOKEN.isNullOrBlank())) {
-            logger.info("No adjust token defined")
-
-            if (Config.channel.isReleased) {
-                throw IllegalStateException("No adjust token defined for release build")
-            }
-
-            return
-        }
-
-        val config = AdjustConfig(
-            application,
-            BuildConfig.ADJUST_TOKEN,
-            AdjustConfig.ENVIRONMENT_PRODUCTION,
-            true,
-        )
-
-        val timerId = AdjustAttribution.adjustAttributionTime.start()
-        config.setOnAttributionChangedListener {
-            AdjustAttribution.adjustAttributionTime.stopAndAccumulate(timerId)
-
-            if (!it.network.isNullOrEmpty()) {
-                settings.adjustNetwork = it.network
-                AdjustAttribution.network.set(it.network)
-            }
-            if (!it.adgroup.isNullOrEmpty()) {
-                settings.adjustAdGroup = it.adgroup
-                AdjustAttribution.adgroup.set(it.adgroup)
-            }
-            if (!it.creative.isNullOrEmpty()) {
-                settings.adjustCreative = it.creative
-                AdjustAttribution.creative.set(it.creative)
-            }
-            if (!it.campaign.isNullOrEmpty()) {
-                settings.adjustCampaignId = it.campaign
-                AdjustAttribution.campaign.set(it.campaign)
-            }
-
-            triggerPing()
-        }
-
-        config.setLogLevel(LogLevel.SUPPRESS)
-        Adjust.initSdk(config)
-        Adjust.enable()
-    }
+    override fun start() {}
 
     override fun stop() {
         Adjust.disable()

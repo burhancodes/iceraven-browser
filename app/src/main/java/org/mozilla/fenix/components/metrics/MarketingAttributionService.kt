@@ -8,6 +8,7 @@ import android.content.Context
 import android.os.RemoteException
 import androidx.annotation.VisibleForTesting
 import mozilla.components.support.base.log.logger.Logger
+import org.mozilla.fenix.distributions.DistributionIdManager
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.settings
 
@@ -26,6 +27,7 @@ class MarketingAttributionService(private val context: Context) {
     /**
      * Starts the connection with the install referrer and handle the response.
      */
+    @Suppress("CognitiveComplexMethod")
     fun start() {
     }
 
@@ -41,9 +43,17 @@ class MarketingAttributionService(private val context: Context) {
      */
     companion object {
         private val marketingPrefixes = listOf(GCLID_PREFIX, ADJUST_REFTAG_PREFIX)
+        var response: String? = null
 
         @VisibleForTesting
-        internal fun shouldShowMarketingOnboarding(installReferrerResponse: String?): Boolean {
+        internal fun shouldShowMarketingOnboarding(
+            installReferrerResponse: String?,
+            distributionIdManager: DistributionIdManager,
+        ): Boolean {
+            if (distributionIdManager.isPartnershipDistribution()) {
+                return !distributionIdManager.shouldSkipMarketingConsentScreen()
+            }
+
             if (installReferrerResponse.isNullOrBlank()) {
                 return false
             }

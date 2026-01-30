@@ -10,15 +10,24 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.recyclerview.widget.RecyclerView
+import androidx.test.espresso.AppNotIdleException
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.longClick
+import androidx.test.espresso.action.ViewActions.pressImeActionButton
 import androidx.test.espresso.assertion.PositionAssertions.isCompletelyAbove
 import androidx.test.espresso.assertion.PositionAssertions.isPartiallyBelow
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -33,6 +42,8 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.By.textContains
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
+import mozilla.components.compose.browser.toolbar.concept.BrowserToolbarTestTags.ADDRESSBAR_SEARCH_BOX
+import mozilla.components.compose.browser.toolbar.concept.BrowserToolbarTestTags.ADDRESSBAR_URL_BOX
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.Assert.assertTrue
 import org.mozilla.fenix.R
@@ -53,6 +64,7 @@ import org.mozilla.fenix.helpers.MatcherHelper.itemWithResIdContainingText
 import org.mozilla.fenix.helpers.SessionLoadedIdlingResource
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTimeShort
+import org.mozilla.fenix.helpers.TestHelper.appContext
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.TestHelper.waitForObjects
@@ -60,6 +72,9 @@ import org.mozilla.fenix.helpers.click
 import org.mozilla.fenix.helpers.ext.waitNotNull
 import org.mozilla.fenix.helpers.matchers.hasItemsCount
 import org.mozilla.fenix.tabstray.TabsTrayTestTag
+import mozilla.components.browser.menu.R as menuR
+import mozilla.components.browser.toolbar.R as toolbarR
+import mozilla.components.ui.tabcounter.R as tabcounterR
 
 /**
  * Implementation of Robot Pattern for the URL toolbar.
@@ -67,13 +82,13 @@ import org.mozilla.fenix.tabstray.TabsTrayTestTag
 class NavigationToolbarRobot {
     fun verifyUrl(url: String) {
         Log.i(TAG, "verifyUrl: Trying to verify toolbar text matches $url")
-        onView(withId(R.id.mozac_browser_toolbar_url_view)).check(matches(withText(url)))
+        onView(withId(toolbarR.id.mozac_browser_toolbar_url_view)).check(matches(withText(url)))
         Log.i(TAG, "verifyUrl: Verified toolbar text matches $url")
     }
 
     fun verifyTabButtonShortcutMenuItems() {
         Log.i(TAG, "verifyTabButtonShortcutMenuItems: Trying to verify tab counter shortcut options")
-        onView(withId(R.id.mozac_browser_menu_recyclerView))
+        onView(withId(menuR.id.mozac_browser_menu_recyclerView))
             .check(matches(hasDescendant(withText("Close tab"))))
             .check(matches(hasDescendant(withText("New private tab"))))
             .check(matches(hasDescendant(withText("New tab"))))
@@ -82,7 +97,7 @@ class NavigationToolbarRobot {
 
     fun verifyTabButtonShortcutMenuItemsForNormalHomescreen() {
         Log.i(TAG, "verifyTabButtonShortcutMenuItemsForNormalHomescreen: Trying to verify tab counter shortcut options")
-        onView(withId(R.id.mozac_browser_menu_recyclerView))
+        onView(withId(menuR.id.mozac_browser_menu_recyclerView))
             .check(matches(hasItemsCount(2)))
             .check(matches(hasDescendant(withText("New tab"))))
             .check(matches(hasDescendant(withText("New private tab"))))
@@ -91,7 +106,7 @@ class NavigationToolbarRobot {
 
     fun verifyTabButtonShortcutMenuItemsForPrivateHomescreen() {
         Log.i(TAG, "verifyTabButtonShortcutMenuItemsForPrivateHomescreen: Trying to verify tab counter shortcut options")
-        onView(withId(R.id.mozac_browser_menu_recyclerView))
+        onView(withId(menuR.id.mozac_browser_menu_recyclerView))
             .check(matches(hasItemsCount(2)))
             .check(matches(hasDescendant(withText("New tab"))))
             .check(matches(hasDescendant(withText("New private tab"))))
@@ -165,11 +180,23 @@ class NavigationToolbarRobot {
         assertItemTextEquals(homeUrlBar(), expectedText = text)
     }
 
+    fun verifySearchBarPlaceholderWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "verifySearchBarPlaceholderWithComposableToolbar: Trying to verify that the search bar place holder is \"Search or enter address\"")
+        composeTestRule.onNodeWithTag(ADDRESSBAR_URL_BOX).assert(hasContentDescription("Search or enter address"))
+        Log.i(TAG, "verifySearchBarPlaceholderWithComposableToolbar: Verified that the search bar place holder is \"Search or enter address\"")
+    }
+
     // New unified search UI selector
     fun verifyDefaultSearchEngine(engineName: String) =
         assertUIObjectExists(
             searchSelectorButton().getChild(UiSelector().descriptionStartsWith(engineName)),
         )
+
+    fun verifyDefaultSearchEngineWithComposableToolbar(composeTestRule: ComposeTestRule, engineName: String) {
+        Log.i(TAG, "verifyDefaultSearchEngineWithComposableToolbar: Trying to verify that default search engine is: $engineName is displayed")
+        composeTestRule.onNodeWithContentDescription(getStringResource(R.string.search_engine_selector_content_description, engineName)).assertIsDisplayed()
+        Log.i(TAG, "verifyDefaultSearchEngineWithComposableToolbar: Verified that default search engine is: $engineName is displayed")
+    }
 
     fun verifyTextSelectionOptions(vararg textSelectionOptions: String) {
         for (textSelectionOption in textSelectionOptions) {
@@ -293,7 +320,7 @@ class NavigationToolbarRobot {
             awesomeBar().setText(url.toString())
             Log.i(TAG, "enterURLAndEnterToBrowser: Toolbar text was set to: $url")
             Log.i(TAG, "enterURLAndEnterToBrowser: Trying to press device enter button")
-            mDevice.pressEnter()
+            pressImeActionOnAwesomeBar()
             Log.i(TAG, "enterURLAndEnterToBrowser: Pressed device enter button")
 
             registerAndCleanupIdlingResources(sessionLoadedIdlingResource) {
@@ -310,6 +337,25 @@ class NavigationToolbarRobot {
             return BrowserRobot.Transition()
         }
 
+        fun enterURLAndEnterToBrowserWithComposableToolbar(
+            composeTestRule: ComposeTestRule,
+            url: Uri,
+            interact: BrowserRobot.() -> Unit,
+        ): BrowserRobot.Transition {
+            Log.i(TAG, "enterURLAndEnterToBrowserWithComposableToolbar: Trying to click navigation toolbar")
+            composeTestRule.onAllNodesWithTag(ADDRESSBAR_URL_BOX).onLast().performClick()
+            Log.i(TAG, "enterURLAndEnterToBrowserWithComposableToolbar: Clicked navigation toolbar")
+            Log.i(TAG, "enterURLAndEnterToBrowserWithComposableToolbar: Trying to set toolbar text to: $url and perform IME action")
+            composeTestRule.onNodeWithTag(ADDRESSBAR_SEARCH_BOX).apply {
+                performTextReplacement(url.toString())
+                performImeAction()
+            }
+            Log.i(TAG, "enterURLAndEnterToBrowserWithComposableToolbar: Toolbar text was set to: $url and IME action performed")
+
+            BrowserRobot().interact()
+            return BrowserRobot.Transition()
+        }
+
         fun enterURL(
             url: Uri,
             interact: BrowserRobot.() -> Unit,
@@ -321,7 +367,7 @@ class NavigationToolbarRobot {
             awesomeBar().setText(url.toString())
             Log.i(TAG, "enterURLAndEnterToBrowser: Toolbar text was set to: $url")
             Log.i(TAG, "enterURLAndEnterToBrowser: Trying to press device enter button")
-            mDevice.pressEnter()
+            pressImeActionOnAwesomeBar()
             Log.i(TAG, "enterURLAndEnterToBrowser: Pressed device enter button")
 
             BrowserRobot().interact()
@@ -338,7 +384,7 @@ class NavigationToolbarRobot {
             awesomeBar().setText(crashUrl)
             Log.i(TAG, "openTabCrashReporter: Toolbar text was set to: $crashUrl")
             Log.i(TAG, "openTabCrashReporter: Trying to press device enter button")
-            mDevice.pressEnter()
+            pressImeActionOnAwesomeBar()
             Log.i(TAG, "openTabCrashReporter: Pressed device enter button")
 
             registerAndCleanupIdlingResources(sessionLoadedIdlingResource) {
@@ -472,7 +518,7 @@ class NavigationToolbarRobot {
             mDevice.waitForIdle(waitingTime)
             Log.i(TAG, "closeTabFromShortcutsMenu: Waited for device to be idle for $waitingTime ms")
             Log.i(TAG, "closeTabFromShortcutsMenu: Trying to click the \"Close tab\" button")
-            onView(withId(R.id.mozac_browser_menu_recyclerView))
+            onView(withId(menuR.id.mozac_browser_menu_recyclerView))
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
@@ -492,7 +538,7 @@ class NavigationToolbarRobot {
             mDevice.waitForIdle(waitingTime)
             Log.i(TAG, "openNewTabFromShortcutsMenu: Waited for device to be idle for $waitingTime ms")
             Log.i(TAG, "openNewTabFromShortcutsMenu: Trying to click the \"New tab\" button")
-            onView(withId(R.id.mozac_browser_menu_recyclerView))
+            onView(withId(menuR.id.mozac_browser_menu_recyclerView))
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
@@ -512,7 +558,7 @@ class NavigationToolbarRobot {
             mDevice.waitForIdle(waitingTime)
             Log.i(TAG, "openNewPrivateTabFromShortcutsMenu: Waited for device to be idle for $waitingTime ms")
             Log.i(TAG, "openNewPrivateTabFromShortcutsMenu: Trying to click the \"New private tab\" button")
-            onView(withId(R.id.mozac_browser_menu_recyclerView))
+            onView(withId(menuR.id.mozac_browser_menu_recyclerView))
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
@@ -536,6 +582,20 @@ class NavigationToolbarRobot {
                 UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_edit_url_view"),
             ).waitForExists(waitingTime)
             Log.i(TAG, "clickUrlbar: Waited for $waitingTime ms for the edit mode toolbar to exist")
+
+            SearchRobot().interact()
+            return SearchRobot.Transition()
+        }
+
+        @OptIn(ExperimentalTestApi::class)
+        fun clickURLBarWithComposableToolbar(composeTestRule: ComposeTestRule, interact: SearchRobot.() -> Unit): SearchRobot.Transition {
+            Log.i(TAG, "clickURLBarWithComposableToolbar: Waiting for $waitingTime until the URL bar to exist")
+            composeTestRule.waitUntilAtLeastOneExists(hasTestTag(ADDRESSBAR_URL_BOX), waitingTime)
+            Log.i(TAG, "clickURLBarWithComposableToolbar: Waited for $waitingTime until the URL bar to exist")
+            Log.i(TAG, "clickURLBarWithComposableToolbar: Trying to click navigation toolbar")
+            composeTestRule.onNodeWithTag(ADDRESSBAR_URL_BOX).performClick()
+            Log.i(TAG, "clickURLBarWithComposableToolbar: Clicked navigation toolbar")
+            composeTestRule.waitForIdle()
 
             SearchRobot().interact()
             return SearchRobot.Transition()
@@ -587,6 +647,21 @@ class NavigationToolbarRobot {
             SearchRobot().interact()
             return SearchRobot.Transition()
         }
+
+        fun openUnifiedTrustPanel(interact: UnifiedTrustPanelRobot.() -> Unit): UnifiedTrustPanelRobot.Transition {
+            Log.i(TAG, "openUnifiedTrustPanel: Waiting for $waitingTime ms for site security button to exist")
+            itemWithResId("$packageName:id/mozac_browser_toolbar_site_info_indicator").waitForExists(waitingTime)
+            Log.i(TAG, "openUnifiedTrustPanel: Waited for $waitingTime ms for site security button to exist")
+            Log.i(TAG, "openUnifiedTrustPanel: Trying to click site security button")
+            itemWithResId("$packageName:id/mozac_browser_toolbar_site_info_indicator").click()
+            Log.i(TAG, "openUnifiedTrustPanel: Clicked site security button")
+            Log.i(TAG, "openUnifiedTrustPanel: Waiting for $waitingTime for the unified trust panel to exist")
+            itemWithResId("$packageName:id/design_bottom_sheet").waitForExists(waitingTime)
+            Log.i(TAG, "openUnifiedTrustPanel: Waited for $waitingTime for the unified trust panel to exist")
+
+            UnifiedTrustPanelRobot().interact()
+            return UnifiedTrustPanelRobot.Transition()
+        }
     }
 }
 
@@ -611,11 +686,39 @@ private fun urlBar() = mDevice.findObject(UiSelector().resourceId("$packageName:
 private fun homeUrlBar() = mDevice.findObject(UiSelector().resourceId("$packageName:id/toolbar_text"))
 private fun awesomeBar() =
     mDevice.findObject(UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_edit_url_view"))
-private fun threeDotButton() = onView(withId(R.id.mozac_browser_toolbar_menu))
+private fun pressImeActionOnAwesomeBar() {
+    val context = appContext
+    val resId = context.resources.getIdentifier(
+        "mozac_browser_toolbar_edit_url_view",
+        "id",
+        packageName,
+    )
+
+    try {
+        Log.i(TAG, "pressImeActionOnAwesomeBar: Trying pressImeActionButton via Espresso")
+        onView(withId(resId)).perform(pressImeActionButton())
+        Log.i(TAG, "pressImeActionOnAwesomeBar: Espresso IME action completed successfully")
+    } catch (e: AppNotIdleException) {
+        Log.w(TAG, "pressImeActionOnAwesomeBar: IME action failed (AppNotIdleException); falling back to UiAutomator pressEnter()", e)
+        try {
+            val field = awesomeBar()
+            if (field.exists()) {
+                field.click()
+                mDevice.pressEnter()
+                Log.i(TAG, "pressImeActionOnAwesomeBar: Fallback UiAutomator pressEnter() executed successfully")
+            } else {
+                Log.w(TAG, "pressImeActionOnAwesomeBar: Fallback failed: awesomeBar() not found")
+            }
+        } catch (fallbackEx: Exception) {
+            Log.e(TAG, "pressImeActionOnAwesomeBar: Fallback UiAutomator pressEnter() failed", fallbackEx)
+        }
+    }
+}
+private fun threeDotButton() = onView(withId(toolbarR.id.mozac_browser_toolbar_menu))
 private fun tabTrayButton() = onView(withId(R.id.tab_button))
 private fun tabsCounter() = onView(
     allOf(
-        withId(R.id.counter_root),
+        withId(tabcounterR.id.counter_root),
         withEffectiveVisibility(Visibility.VISIBLE),
     ),
 )

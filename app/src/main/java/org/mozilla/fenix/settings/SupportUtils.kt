@@ -13,16 +13,15 @@ import mozilla.components.support.ktx.android.content.appVersionName
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.IntentReceiverActivity
-import org.mozilla.fenix.R
 import org.mozilla.fenix.customtabs.EXTRA_IS_SANDBOX_CUSTOM_TAB
 import org.mozilla.fenix.settings.account.AuthIntentReceiverActivity
 import java.io.UnsupportedEncodingException
 import java.net.URLEncoder
 import java.util.Locale
+import com.google.android.material.R as materialR
 
 object SupportUtils {
     const val RATE_APP_URL = "market://details?id=" + BuildConfig.APPLICATION_ID
-    const val WIKIPEDIA_URL = "https://www.wikipedia.org/"
     const val FENIX_PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}"
     const val GOOGLE_URL = "https://www.google.com/"
     const val GOOGLE_US_URL = "https://www.google.com/webhp?client=firefox-b-1-m&channel=ts"
@@ -52,9 +51,11 @@ object SupportUtils {
         SMARTBLOCK("smartblock-enhanced-tracking-protection"),
         SPONSOR_PRIVACY("sponsor-privacy"),
         HTTPS_ONLY_MODE("https-only-mode-firefox-android"),
-        DNS_OVER_HTTPS("https-only-mode-firefox-android"), // FIXME
-        DNS_OVER_HTTPS_LOCAL_PROVIDER("https-only-mode-firefox-android"), // FIXME
-        DNS_OVER_HTTPS_NETWORK("https-only-mode-firefox-android"), // FIXME
+        DNS_OVER_HTTPS("configure-dns-over-https-protection-levels-firefox-android"),
+        DNS_OVER_HTTPS_LOCAL_PROVIDER(
+            "configure-dns-over-https-protection-levels-firefox-android#w_what-is-a-local-provider",
+        ),
+        DNS_OVER_HTTPS_NETWORK("configure-dns-over-https-protection-levels-firefox-android"),
         UNSIGNED_ADDONS("unsigned-addons"),
         REVIEW_QUALITY_CHECK("review_checker_mobile"),
         FX_SUGGEST("search-suggestions-firefox"),
@@ -68,6 +69,11 @@ object SupportUtils {
         MARKETING_DATA("mobile-marketing-data"),
         REQUESTED_CRASH_MINIDUMP("unsent-crash-reports-in-firefox-android"),
         TERMS_OF_USE("firefox-terms-of-use-faq"),
+
+        /**
+         * SUMO page for Local Network Access & Local Device Access permissions
+         */
+        LOCAL_NETWORK_AND_DEVICE_ACCESS("control-personal-device-local-network-permissions-firefox-android"),
     }
 
     enum class MozillaPage(internal val path: String) {
@@ -117,7 +123,8 @@ object SupportUtils {
     fun createCustomTabIntent(context: Context, url: String): Intent = CustomTabsIntent.Builder()
         .setInstantAppsEnabled(false)
         .setDefaultColorSchemeParams(
-            CustomTabColorSchemeParams.Builder().setToolbarColor(context.getColorFromAttr(R.attr.layer1)).build(),
+            CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(context.getColorFromAttr(materialR.attr.colorSurface)).build(),
         )
         .build()
         .intent

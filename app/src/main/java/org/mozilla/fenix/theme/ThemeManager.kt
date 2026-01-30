@@ -8,9 +8,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Color
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
 import android.util.TypedValue
 import android.view.Window
 import androidx.annotation.AnyRes
@@ -27,6 +24,7 @@ import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.customtabs.ExternalAppBrowserActivity
+import com.google.android.material.R as materialR
 
 abstract class ThemeManager {
 
@@ -106,34 +104,24 @@ abstract class ThemeManager {
         }
 
         private fun updateLightSystemBars(window: Window, context: Context, overrideThemeStatusBarColor: Boolean) {
-            if (SDK_INT >= Build.VERSION_CODES.M) {
-                setStatusBarColor(window, context, overrideThemeStatusBarColor)
-                window.createWindowInsetsController().isAppearanceLightStatusBars = true
-            } else {
-                window.setStatusBarColorCompat(Color.BLACK)
-            }
+            setStatusBarColor(window, context, overrideThemeStatusBarColor)
+            window.createWindowInsetsController().isAppearanceLightStatusBars = true
 
-            if (SDK_INT >= Build.VERSION_CODES.O) {
-                // API level can display handle light navigation bar color
-                window.createWindowInsetsController().isAppearanceLightNavigationBars = true
+            // display handle light navigation bar color
+            window.createWindowInsetsController().isAppearanceLightNavigationBars = true
 
-                updateNavigationBar(window, context)
-            }
+            updateNavigationBar(window, context)
         }
 
         private fun clearLightSystemBars(window: Window) {
-            if (SDK_INT >= Build.VERSION_CODES.M) {
-                window.createWindowInsetsController().isAppearanceLightStatusBars = false
-            }
+            window.createWindowInsetsController().isAppearanceLightStatusBars = false
 
-            if (SDK_INT >= Build.VERSION_CODES.O) {
-                // API level can display handle light navigation bar color
-                window.createWindowInsetsController().isAppearanceLightNavigationBars = false
-            }
+            // display handle light navigation bar color
+            window.createWindowInsetsController().isAppearanceLightNavigationBars = false
         }
 
         private fun updateNavigationBar(window: Window, context: Context) {
-            window.setNavigationBarColorCompat(context.getColorFromAttr(R.attr.layer1))
+            window.setNavigationBarColorCompat(context.getColorFromAttr(materialR.attr.colorSurface))
         }
 
         private fun setStatusBarColor(

@@ -24,6 +24,7 @@ pluginManagement {
     includeBuild("./android-components/plugins/dependencies")
     includeBuild("./android-components/plugins/config")
     includeBuild("./plugins/apksize")
+    includeBuild("./plugins/nimbus-gradle-plugin")
 }
 
 plugins {
@@ -42,6 +43,10 @@ ext.topsrcdir = rootProject.projectDir.absolutePath.minus("mobile/android/fenix"
 
 apply from: file('./shared-settings.gradle')
 // apply from: file('./autopublish-settings.gradle')
+
+if (gradle.ext.mozconfig.substs.MOZ_APPSERVICES_IN_TREE) {
+    apply from: file("${topsrcdir}/services/app-services/settings.gradle")
+}
 
 include ':app'
 include ':mozilla-detekt-rules'

@@ -4,8 +4,10 @@
 
 package org.mozilla.fenix
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.StrictMode
@@ -30,10 +32,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import mozilla.appservices.autofill.AutofillApiException
 import mozilla.components.browser.state.action.SystemAction
-import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.selector.selectedTab
-import mozilla.components.browser.state.state.searchEngines
-import mozilla.components.browser.state.state.selectedOrDefaultSearchEngine
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.storage.sync.GlobalPlacesDependencyProvider
 import mozilla.components.concept.base.crash.Breadcrumb
@@ -82,6 +81,8 @@ import org.mozilla.fenix.GleanMetrics.Metrics
 import org.mozilla.fenix.GleanMetrics.PerfStartup
 import org.mozilla.fenix.GleanMetrics.Preferences
 import org.mozilla.fenix.GleanMetrics.SearchDefaultEngine
+import org.mozilla.fenix.GleanMetrics.TabStrip
+import org.mozilla.fenix.GleanMetrics.TermsOfUse
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.Core
 import org.mozilla.fenix.components.appstate.AppAction
@@ -109,11 +110,16 @@ import org.mozilla.fenix.perf.runBlockingIncrement
 import org.mozilla.fenix.push.PushFxaIntegration
 import org.mozilla.fenix.push.WebPushEngineIntegration
 import org.mozilla.fenix.session.VisibilityLifecycleCallback
+import org.mozilla.fenix.settings.doh.DefaultDohSettingsProvider
+import org.mozilla.fenix.settings.doh.DohSettingsProvider
+import org.mozilla.fenix.startupCrash.StartupCrashActivity
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.fenix.utils.isLargeScreenSize
 import org.mozilla.fenix.wallpapers.Wallpaper
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
+import mozilla.components.support.AppServicesInitializer.Config as AppServicesConfig
 
 private const val RAM_THRESHOLD_MEGABYTES = 1024
 private const val BYTES_TO_MEGABYTES_CONVERSION = 1024.0 * 1024.0
@@ -141,7 +147,6 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
     override fun onCreate() {
         super.onCreate()
-
         initialize()
     }
 
@@ -154,6 +159,11 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
         setupInAllProcesses()
 
+        // If the main process crashes before we've reached visual completeness, we consider it to
+        // be a startup crash and fork into the recovery flow. The activity that is responsible for
+        // that flow is hosted in a separate process, which means that we avoid the majority of
+        // initialization work that is done in `setupInMainProcess`
+        // Please see the README.md in the fenix/startupCrash package for more information.
         if (!isMainProcess()) {
             // If this is not the main process then do not continue with the initialization here. Everything that
             // follows only needs to be done in our app's main process and should not be done in other processes like
@@ -163,6 +173,8 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
         }
 
         // DO NOT ADD ANYTHING ABOVE HERE.
+        // Note: That the startup crash recovery flow is hosted in a different process,
+        // so this call will be avoided in that case
         setupInMainProcessOnly()
         // DO NOT ADD ANYTHING UNDER HERE.
 
@@ -194,10 +206,14 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
         }
     }
 
+    @SuppressLint("NewApi")
     @VisibleForTesting
     protected open fun setupInAllProcesses() {
-        setupCrashReporting()
-
+        // See Bug 1969818: Crash reporting requires updates to be compatible with
+        // isolated content process.
+        if (!android.os.Process.isIsolated()) {
+            setupCrashReporting()
+        }
         // We want the log messages of all builds to go to Android logcat
         Log.addSink(FenixLogSink(logsDebug = Config.channel.isDebug, AndroidLogSink()))
     }
@@ -216,7 +232,7 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
         run {
             // Make sure the engine is initialized and ready to use.
-            components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+            components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
                 components.core.engine.warmUp()
             }
 
@@ -264,6 +280,8 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
                     settings().hasMadeMarketingTelemetrySelection,
                 isDailyUsagePingEnabled = settings().isDailyUsagePingEnabled,
             )
+        } else {
+            components.distributionIdManager.startAdjustIfSkippingConsentScreen()
         }
         setupPush()
 
@@ -275,6 +293,7 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
         components.appStartReasonProvider.registerInAppOnCreate(this)
         components.startupActivityLog.registerInAppOnCreate(this)
+        components.appLinkIntentLaunchTypeProvider.registerInAppOnCreate(this)
         initVisualCompletenessQueueAndQueueTasks()
 
         ProcessLifecycleOwner.get().lifecycle.addObservers(
@@ -379,13 +398,11 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
         }
 
         fun queueMetrics() {
-            if (SDK_INT >= Build.VERSION_CODES.O) { // required by StorageStatsMetrics.
-                queue.runIfReadyOrQueue {
-                    // Because it may be slow to capture the storage stats, it might be preferred to
-                    // create a WorkManager task for this metric, however, I ran out of
-                    // implementation time and WorkManager is harder to test.
-                    StorageStatsMetrics.report(this.applicationContext)
-                }
+            queue.runIfReadyOrQueue {
+                // Because it may be slow to capture the storage stats, it might be preferred to
+                // create a WorkManager task for this metric, however, I ran out of
+                // implementation time and WorkManager is harder to test.
+                StorageStatsMetrics.report(this.applicationContext)
             }
         }
 
@@ -499,7 +516,20 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
         components
             .analytics
             .crashReporter
-            .install(this)
+            .install(this, ::handleCaughtException)
+    }
+
+    private fun handleCaughtException() {
+        if (
+            isMainProcess() &&
+            Config.channel.isNightlyOrDebug &&
+            !components.performance.visualCompletenessQueue.isReady()
+        ) {
+            val intent = Intent(applicationContext, StartupCrashActivity::class.java)
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            applicationContext.startActivity(intent)
+        }
     }
 
     protected open fun initializeNimbus() {
@@ -527,7 +557,9 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
      */
     private fun beginSetupMegazord() {
         // Rust components must be initialized at the very beginning, before any other Rust call, ...
-        AppServicesInitializer.init(components.analytics.crashReporter)
+        AppServicesInitializer.init(
+            AppServicesConfig(components.analytics.crashReporter),
+        )
     }
 
     @OptIn(DelicateCoroutinesApi::class) // GlobalScope usage
@@ -547,6 +579,7 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
         }
     }
 
+    @SuppressLint("NewApi")
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
 
@@ -555,17 +588,21 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
         logger.info("onTrimMemory(), level=$level, main=${isMainProcess()}")
 
-        components.analytics.crashReporter.recordCrashBreadcrumb(
-            Breadcrumb(
-                category = "Memory",
-                message = "onTrimMemory()",
-                data = mapOf(
-                    "level" to level.toString(),
-                    "main" to isMainProcess().toString(),
+        // See Bug 1969818: Crash reporting requires updates to be compatible with
+        // isolated content process.
+        if (!android.os.Process.isIsolated()) {
+            components.analytics.crashReporter.recordCrashBreadcrumb(
+                Breadcrumb(
+                    category = "Memory",
+                    message = "onTrimMemory()",
+                    data = mapOf(
+                        "level" to level.toString(),
+                        "main" to isMainProcess().toString(),
+                    ),
+                    level = Breadcrumb.Level.INFO,
                 ),
-                level = Breadcrumb.Level.INFO,
-            ),
-        )
+            )
+        }
 
         runOnlyInMainProcess {
             components.core.icons.onTrimMemory(level)
@@ -622,21 +659,6 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
                         AppCompatDelegate.MODE_NIGHT_NO,
                     )
                     settings.shouldUseLightTheme = true
-                }
-            }
-        }
-    }
-
-    /**
-     * Migrate the topic specific engine to the first general or custom search engine available.
-     */
-    private fun migrateTopicSpecificSearchEngines() {
-        components.core.store.state.search.selectedOrDefaultSearchEngine.let { currentSearchEngine ->
-            if (currentSearchEngine?.isGeneral == false) {
-                components.core.store.state.search.searchEngines.firstOrNull { nextSearchEngine ->
-                    nextSearchEngine.isGeneral
-                }?.let {
-                    components.useCases.searchUseCases.selectSearchEngine(it)
                 }
             }
         }
@@ -730,18 +752,26 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
      * the current metrics ping design. The values set here will be sent in every metrics ping even
      * if these values have not changed since the last startup.
      */
-    @Suppress("ComplexMethod", "LongMethod")
+    @Suppress("CognitiveComplexMethod", "LongMethod", "CyclomaticComplexMethod")
     @VisibleForTesting
     internal fun setStartupMetrics(
         browserStore: BrowserStore,
         settings: Settings,
+        dohSettingsProvider: DohSettingsProvider = DefaultDohSettingsProvider(
+            components.core.engine,
+            settings,
+        ),
         browsersCache: BrowsersCache = BrowsersCache,
         mozillaProductDetector: MozillaProductDetector = MozillaProductDetector,
     ) {
-        setPreferenceMetrics(settings)
+        setPreferenceMetrics(settings, dohSettingsProvider)
         with(Metrics) {
             // Set this early to guarantee it's in every ping from here on.
             distributionId.set(components.distributionIdManager.getDistributionId())
+
+            if (settings.hasAcceptedTermsOfService) {
+                setTermsOfUseStartUpMetrics(settings)
+            }
 
             defaultBrowser.set(browsersCache.all(applicationContext).isDefaultBrowser)
             mozillaProductDetector.getMozillaBrowserDefault(applicationContext)?.also {
@@ -851,12 +881,15 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
                         name.set("custom")
                     }
                 }
-
-                migrateTopicSpecificSearchEngines()
             }
         }
 
         setAutofillMetrics()
+    }
+
+    private fun setTermsOfUseStartUpMetrics(settings: Settings) {
+        TermsOfUse.version.set(settings.termsOfUseAcceptedVersion.toLong())
+        TermsOfUse.date.set(Date(settings.termsOfUseAcceptedTimeInMillis))
     }
 
     @VisibleForTesting
@@ -887,12 +920,15 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
     private fun isDeviceRamAboveThreshold() = deviceRamApproxMegabytes() > RAM_THRESHOLD_MEGABYTES
 
-    @Suppress("ComplexMethod")
+    @Suppress("CyclomaticComplexMethod")
     private fun setPreferenceMetrics(
         settings: Settings,
+        dohSettingsProvider: DohSettingsProvider,
     ) {
         with(Preferences) {
             searchSuggestionsEnabled.set(settings.shouldShowSearchSuggestions)
+            showSponsorSuggestionsEnabled.set(settings.showSponsoredSuggestions)
+            showNonSponsorSuggestionsEnabled.set(settings.showNonSponsoredSuggestions)
             remoteDebuggingEnabled.set(settings.isRemoteDebuggingEnabled)
             studiesEnabled.set(settings.isExperimentationEnabled)
             telemetryEnabled.set(settings.isTelemetryEnabled)
@@ -903,6 +939,9 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
             voiceSearchEnabled.set(settings.shouldShowVoiceSearch)
             openLinksInAppEnabled.set(settings.openLinksInExternalApp)
             signedInSync.set(settings.signedInFxaAccount)
+            isolatedContentProcessesEnabled.set(settings.isIsolatedProcessEnabled)
+            appZygoteIsolatedContentProcessesEnabled.set(settings.isAppZygoteEnabled)
+            TabStrip.enabled.set(settings.isTabStripEnabled)
 
             val syncedItems = SyncEnginesStorage(applicationContext).getStatus().entries.filter {
                 it.value
@@ -923,6 +962,11 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
                     else -> "simple"
                 },
             )
+
+            if (settings.shouldShowToolbarCustomization) {
+                toolbarSimpleShortcut.set(settings.toolbarSimpleShortcut)
+                toolbarExpandedShortcut.set(settings.toolbarExpandedShortcut)
+            }
 
             enhancedTrackingProtection.set(
                 when {
@@ -958,6 +1002,9 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
             )
 
             inactiveTabsEnabled.set(settings.inactiveTabsAreEnabled)
+            dohProtectionLevel.set(dohSettingsProvider.getSelectedProtectionLevel().toString())
+            httpsOnlyMode.set(settings.getHttpsOnlyMode().toString())
+            globalPrivacyControlEnabled.set(settings.shouldEnableGlobalPrivacyControl)
         }
         reportHomeScreenMetrics(settings)
     }
@@ -1035,7 +1082,7 @@ open class FenixApplication : LocaleAwareApplication(), Provider {
 
             // There's a strict mode violation in A-Cs LocaleAwareApplication which
             // reads from shared prefs: https://github.com/mozilla-mobile/android-components/issues/8816
-            components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+            components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
                 super.onConfigurationChanged(config)
             }
         } else {

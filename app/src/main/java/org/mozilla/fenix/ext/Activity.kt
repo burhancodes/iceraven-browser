@@ -13,14 +13,15 @@ import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
 import androidx.annotation.DrawableRes
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.os.bundleOf
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDirections
 import mozilla.components.concept.base.crash.Breadcrumb
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.feature.intent.ext.getSessionId
+import mozilla.components.support.ktx.android.content.getColorFromAttr
 import mozilla.components.support.utils.EXTRA_ACTIVITY_REFERRER_PACKAGE
 import mozilla.components.support.utils.SafeIntent
 import mozilla.components.support.utils.toSafeIntent
@@ -62,6 +63,7 @@ import org.mozilla.fenix.translations.TranslationsDialogFragmentDirections
 import org.mozilla.fenix.translations.preferences.downloadlanguages.DownloadLanguagesPreferenceFragmentDirections
 import org.mozilla.fenix.webcompat.ui.WebCompatReporterFragmentDirections
 import java.security.InvalidParameterException
+import com.google.android.material.R as materialR
 
 /**
  * Attempts to call immersive mode using the View to hide the status bar and navigation buttons.
@@ -138,15 +140,12 @@ fun Activity.openSetDefaultBrowserOption(
                 }
             }
         }
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.N -> {
+        else -> {
             navigateToDefaultBrowserAppsSettings(
                 useCustomTab = useCustomTab,
                 from = from,
                 flags = flags,
             )
-        }
-        else -> {
-            openDefaultBrowserSumoPage(useCustomTab, from, flags)
         }
     }
 }
@@ -172,7 +171,6 @@ fun Context.isDefaultBrowserPromptSupported(): Boolean {
     return false
 }
 
-@RequiresApi(Build.VERSION_CODES.N)
 private fun Activity.navigateToDefaultBrowserAppsSettings(
     from: BrowserDirection,
     flags: EngineSession.LoadUrlFlags,
@@ -225,7 +223,10 @@ fun Activity.setNavigationIcon(
 ) {
     (this as? AppCompatActivity)?.supportActionBar?.let {
         it.setDisplayHomeAsUpEnabled(true)
-        it.setHomeAsUpIndicator(icon)
+        val navigationIcon = AppCompatResources.getDrawable(this, icon)?.apply {
+            setTint(getColorFromAttr(materialR.attr.colorOnSurface))
+        }
+        it.setHomeAsUpIndicator(navigationIcon)
         it.setHomeActionContentDescription(R.string.action_bar_up_description)
     }
 }

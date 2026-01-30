@@ -193,12 +193,12 @@ fun UiDevice.flingToBeginning(scrollableId: String, maxSwipes: Int) {
 }
 
 private fun getUrlBarId(useNewToolbar: Boolean) = when (useNewToolbar) {
-    true -> "ADDRESSBAR_URL"
+    true -> "ADDRESSBAR_URL_BOX"
     false -> "$TARGET_PACKAGE:id/toolbar"
 }
 
 private fun getUrlBarEditField(useNewToolbar: Boolean) = when (useNewToolbar) {
-    true -> "$TARGET_PACKAGE:id/mozac_addressbar_search_query_input"
+    true -> "ADDRESSBAR_SEARCH_BOX"
     false -> "$TARGET_PACKAGE:id/mozac_browser_toolbar_edit_url_view"
 }
 

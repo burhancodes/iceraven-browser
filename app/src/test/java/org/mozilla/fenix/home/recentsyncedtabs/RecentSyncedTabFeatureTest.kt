@@ -11,12 +11,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import mozilla.components.browser.storage.sync.SyncedDeviceTabs
 import mozilla.components.browser.storage.sync.Tab
 import mozilla.components.browser.storage.sync.TabEntry
@@ -35,9 +33,9 @@ import mozilla.components.service.fxa.store.SyncAction
 import mozilla.components.service.fxa.store.SyncStatus
 import mozilla.components.service.fxa.store.SyncStore
 import mozilla.components.service.fxa.sync.SyncReason
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
-import mozilla.telemetry.glean.internal.ErrorType
+import mozilla.components.support.test.rule.MainCoroutineRule
+import mozilla.telemetry.glean.testing.ErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -50,8 +48,12 @@ import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 
+@OptIn(ExperimentalCoroutinesApi::class) // runCurrent
 @RunWith(AndroidJUnit4::class)
 class RecentSyncedTabFeatureTest {
+
+    @get:Rule
+    val coroutinesTestRule = MainCoroutineRule()
 
     @get:Rule
     val gleanTestRule = FenixGleanTestRule(testContext)
@@ -101,8 +103,6 @@ class RecentSyncedTabFeatureTest {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(StandardTestDispatcher())
-
         every { appStore.dispatch(any()) } returns mockk()
         mockkConstructor(SyncEnginesStorage::class)
         every { anyConstructed<SyncEnginesStorage>().getStatus() } returns mapOf(
@@ -571,7 +571,6 @@ class RecentSyncedTabFeatureTest {
         account?.let {
             this.dispatch(SyncAction.UpdateAccount(account))
         }
-        this.waitUntilIdle()
     }
 
     private fun Tab.toVisitInfo(url: String, previewUrl: String?) = VisitInfo(

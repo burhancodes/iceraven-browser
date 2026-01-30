@@ -11,8 +11,6 @@ import mozilla.components.concept.engine.permission.SitePermissions
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
 import org.mozilla.fenix.settings.PhoneFeature
-import org.mozilla.fenix.settings.quicksettings.ext.shouldBeEnabled
-import org.mozilla.fenix.settings.quicksettings.ext.shouldBeVisible
 import org.mozilla.fenix.utils.Settings
 
 /**
@@ -91,7 +89,7 @@ class TrustPanelStore(
                         WebsitePermission.Toggleable(
                             isEnabled = status.isAllowed(),
                             isBlockedByAndroid = false,
-                            isVisible = settings.isLnaBlockingEnabled && sitePermissions != null &&
+                            isVisible = settings.isLnaFeatureEnabled && sitePermissions != null &&
                                     status.doNotAskAgain(),
                             deviceFeature = phoneFeature,
                         )

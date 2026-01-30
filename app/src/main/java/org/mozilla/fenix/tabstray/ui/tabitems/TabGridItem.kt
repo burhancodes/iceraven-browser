@@ -4,9 +4,8 @@
 
 package org.mozilla.fenix.tabstray.ui.tabitems
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -66,10 +65,20 @@ import org.mozilla.fenix.compose.SwipeToDismissState2
 import org.mozilla.fenix.compose.TabThumbnail
 import org.mozilla.fenix.tabstray.TabsTrayTestTag
 import org.mozilla.fenix.tabstray.ext.toDisplayTitle
+import org.mozilla.fenix.tabstray.ui.sharedTabTransition
 import org.mozilla.fenix.theme.FirefoxTheme
 import kotlin.math.max
+import mozilla.components.ui.icons.R as iconsR
 
+private val TabContentCardShape = RoundedCornerShape(16.dp)
 private val ThumbnailPadding = 4.dp
+private val ThumbnailShape = RoundedCornerShape(
+    topStart = 4.dp,
+    topEnd = 4.dp,
+    bottomStart = 12.dp,
+    bottomEnd = 12.dp,
+)
+private val TabHeaderIconTouchTargetSize = 40.dp
 
 /**
  * Tab grid item used to display a tab that supports clicks,
@@ -127,8 +136,7 @@ fun TabGridItem(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CognitiveComplexMethod")
 @Composable
 private fun TabContent(
     tab: TabSessionState,
@@ -170,18 +178,15 @@ private fun TabContent(
             )
         }
 
-        val tabContentCardShape = RoundedCornerShape(16.dp)
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(gridItemAspectRatio)
-                .clip(tabContentCardShape)
+                .clip(TabContentCardShape)
                 .then(clickableModifier)
                 .semantics {
                     selected = isSelected
                 },
-            shape = tabContentCardShape,
+            shape = TabContentCardShape,
             colors = CardDefaults.cardColors(
                 containerColor = if (isSelected) {
                     MaterialTheme.colorScheme.primary
@@ -192,16 +197,15 @@ private fun TabContent(
                 },
             ),
         ) {
-            Column(
-                modifier = Modifier.padding(ThumbnailPadding),
-            ) {
+            Column {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(all = FirefoxTheme.layout.space.static50)
                         .wrapContentHeight(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Spacer(modifier = Modifier.width(FirefoxTheme.layout.space.static50 + ThumbnailPadding))
+
                     val icon = tab.content.icon
                     if (icon != null) {
                         icon.prepareToDraw()
@@ -218,7 +222,7 @@ private fun TabContent(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.mozac_ic_globe_24),
+                                painter = painterResource(id = iconsR.drawable.mozac_ic_globe_24),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = if (isSelected) {
@@ -243,17 +247,19 @@ private fun TabContent(
                         style = FirefoxTheme.typography.caption,
                     )
 
+                    Spacer(modifier = Modifier.width(FirefoxTheme.layout.space.static50))
+
                     if (!multiSelectionEnabled) {
                         IconButton(
                             modifier = Modifier
-                                .size(20.dp)
+                                .size(TabHeaderIconTouchTargetSize)
                                 .testTag(TabsTrayTestTag.TAB_ITEM_CLOSE),
                             onClick = {
                                 onCloseClick(tab)
                             },
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.mozac_ic_cross_20),
+                                painter = painterResource(id = iconsR.drawable.mozac_ic_cross_20),
                                 contentDescription = stringResource(
                                     id = R.string.close_tab_title,
                                     tab.toDisplayTitle(),
@@ -266,36 +272,39 @@ private fun TabContent(
                             )
                         }
                     } else {
-                        RadioCheckmark(
-                            isSelected = multiSelectionSelected,
-                            colors = if (isSelected) {
-                                RadioCheckmarkColors.default(
-                                    backgroundColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkmarkColor = MaterialTheme.colorScheme.primary,
-                                    borderColor = MaterialTheme.colorScheme.onPrimary,
-                                )
-                            } else {
-                                RadioCheckmarkColors.default()
-                            },
-                        )
+                        Box(
+                            modifier = Modifier.size(TabHeaderIconTouchTargetSize),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            RadioCheckmark(
+                                isSelected = multiSelectionSelected,
+                                colors = if (isSelected) {
+                                    RadioCheckmarkColors.default(
+                                        backgroundColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkmarkColor = MaterialTheme.colorScheme.primary,
+                                        borderColor = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                } else {
+                                    RadioCheckmarkColors.default()
+                                },
+                            )
+                        }
                     }
                 }
 
-                val thumbnailShape = RoundedCornerShape(
-                    topStart = 4.dp,
-                    topEnd = 4.dp,
-                    bottomStart = 12.dp,
-                    bottomEnd = 12.dp,
-                )
                 Card(
-                    shape = thumbnailShape,
+                    modifier = Modifier
+                        .aspectRatio(gridItemAspectRatio)
+                        .padding(horizontal = ThumbnailPadding),
+                    shape = ThumbnailShape,
                 ) {
                     Thumbnail(
                         tab = tab,
                         size = thumbnailSize,
-                        shape = thumbnailShape,
                     )
                 }
+
+                Spacer(modifier = Modifier.height(ThumbnailPadding))
             }
         }
     }
@@ -325,29 +334,24 @@ private fun clickableColor() = when (isSystemInDarkTheme()) {
  *
  * @param tab Tab, containing the thumbnail to be displayed.
  * @param size Size of the thumbnail.
- * @param shape Shape of the thumbnail card.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun Thumbnail(
     tab: TabSessionState,
     size: Int,
-    shape: Shape,
 ) {
-    Box(
+    TabThumbnail(
+        tab = tab,
+        thumbnailSizePx = size,
         modifier = Modifier
-            .fillMaxSize()
-            .background(FirefoxTheme.colors.layer2)
             .semantics(mergeDescendants = true) {
                 testTag = TabsTrayTestTag.TAB_ITEM_THUMBNAIL
-            },
-    ) {
-        TabThumbnail(
-            tab = tab,
-            size = size,
-            modifier = Modifier.fillMaxSize(),
-            shape = shape,
-        )
-    }
+            }
+            .sharedTabTransition(tab = tab)
+            .fillMaxSize(),
+        shape = ThumbnailShape,
+    )
 }
 
 private data class TabGridItemPreviewState(

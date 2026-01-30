@@ -66,7 +66,7 @@ class BrowserMenuSignIn(
                 email ?: resources.getString(R.string.browser_menu_account_settings)
             }
         } else {
-            resources.getString(R.string.sync_menu_sync_and_save_data)
+            resources.getString(R.string.sync_menu_sign_in)
         }
     }
 }

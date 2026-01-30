@@ -45,6 +45,7 @@ import org.mozilla.fenix.components.menu.MenuDialogTestTag.WEB_EXTENSION_ITEM
 import org.mozilla.fenix.helpers.Constants.RETRY_COUNT
 import org.mozilla.fenix.helpers.Constants.TAG
 import org.mozilla.fenix.helpers.Constants.recommendedAddons
+import org.mozilla.fenix.helpers.DataGenerationHelper.getRecommendedExtensionTitle
 import org.mozilla.fenix.helpers.DataGenerationHelper.getStringResource
 import org.mozilla.fenix.helpers.HomeActivityIntentTestRule
 import org.mozilla.fenix.helpers.MatcherHelper.assertUIObjectExists
@@ -62,6 +63,7 @@ import org.mozilla.fenix.helpers.TestHelper.restartApp
 import org.mozilla.fenix.helpers.TestHelper.waitForAppWindowToBeUpdated
 import org.mozilla.fenix.helpers.click
 import org.mozilla.fenix.helpers.ext.waitNotNull
+import mozilla.components.feature.addons.R as addonsR
 
 /**
  * Implementation of Robot Pattern for the Addons Management Settings.
@@ -77,7 +79,7 @@ class SettingsSubMenuAddonsManagerRobot {
 
     fun verifyAddonDownloadOverlay() {
         Log.i(TAG, "verifyAddonDownloadOverlay: Trying to verify that the \"Downloading and verifying extension\" prompt is displayed")
-        onView(withText(R.string.mozac_extension_install_progress_caption)).check(matches(isDisplayed()))
+        onView(withText(addonsR.string.mozac_extension_install_progress_caption)).check(matches(isDisplayed()))
         Log.i(TAG, "verifyAddonDownloadOverlay: Verified that the \"Downloading and verifying extension\" prompt is displayed")
     }
 
@@ -94,23 +96,23 @@ class SettingsSubMenuAddonsManagerRobot {
             ),
             itemWithResIdContainingText(
                 "$packageName:id/optional_settings_title",
-                getStringResource(R.string.mozac_feature_addons_permissions_dialog_heading_optional_settings),
+                getStringResource(addonsR.string.mozac_feature_addons_permissions_dialog_heading_optional_settings),
             ),
             itemWithResIdContainingText(
                 "$packageName:id/allow_in_private_browsing",
-                getStringResource(R.string.mozac_feature_addons_settings_allow_in_private_browsing_2),
+                getStringResource(addonsR.string.mozac_feature_addons_settings_allow_in_private_browsing_2),
             ),
             itemWithResIdContainingText(
                 "$packageName:id/learn_more_link",
-                getStringResource(R.string.mozac_feature_addons_permissions_dialog_learn_more),
+                getStringResource(addonsR.string.mozac_feature_addons_permissions_dialog_learn_more),
             ),
             itemWithResIdContainingText(
                 "$packageName:id/deny_button",
-                getStringResource(R.string.mozac_feature_addons_permissions_dialog_cancel),
+                getStringResource(addonsR.string.mozac_feature_addons_permissions_dialog_cancel),
             ),
             itemWithResIdContainingText(
                 "$packageName:id/allow_button",
-                getStringResource(R.string.mozac_feature_addons_permissions_dialog_add),
+                getStringResource(addonsR.string.mozac_feature_addons_permissions_dialog_add),
             ),
         )
     }
@@ -202,7 +204,7 @@ class SettingsSubMenuAddonsManagerRobot {
         onView(
             allOf(
                 withId(R.id.add_button),
-                isDescendantOfA(withId(R.id.add_on_item)),
+                isDescendantOfA(withId(addonsR.id.add_on_item)),
                 hasSibling(hasDescendant(withText(addonName))),
             ),
         ).check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
@@ -227,11 +229,11 @@ class SettingsSubMenuAddonsManagerRobot {
         onView(
             allOf(
                 isAssignableFrom(RelativeLayout::class.java),
-                withId(R.id.add_on_item),
-                hasDescendant(allOf(withId(R.id.add_on_icon), isCompletelyDisplayed())),
+                withId(addonsR.id.add_on_item),
+                hasDescendant(allOf(withId(addonsR.id.add_on_icon), isCompletelyDisplayed())),
                 hasDescendant(
                     allOf(
-                        withId(R.id.details_container),
+                        withId(addonsR.id.details_container),
                         hasDescendant(withText("uBlock Origin")),
                         hasDescendant(withText("Finally, an efficient wide-spectrum content blocker. Easy on CPU and memory.")),
                         hasDescendant(withId(R.id.rating)),
@@ -253,7 +255,7 @@ class SettingsSubMenuAddonsManagerRobot {
                 hasSibling(
                     hasDescendant(
                         allOf(
-                            withId(R.id.add_on_name),
+                            withId(addonsR.id.add_on_name),
                             withText(addonName),
                         ),
                     ),
@@ -266,7 +268,7 @@ class SettingsSubMenuAddonsManagerRobot {
     fun selectAllowInPrivateBrowsing() {
         assertUIObjectExists(itemWithText("Allow extension to run in private browsing"), waitingTime = waitingTimeLong)
         Log.i(TAG, "selectAllowInPrivateBrowsing: Trying to click the \"Allow in private browsing\" check box")
-        onView(withId(R.id.allow_in_private_browsing)).click()
+        onView(withId(addonsR.id.allow_in_private_browsing)).click()
         Log.i(TAG, "selectAllowInPrivateBrowsing: Clicked the \"Allow in private browsing\" check box")
     }
 
@@ -299,7 +301,8 @@ class SettingsSubMenuAddonsManagerRobot {
         verifyTheRecommendedAddons(composeTestRule)
         Log.i(TAG, "verifyRecommendedAddonsViewFromRedesignedMainMenu: Trying to verify that that the \"Discover more extensions\" button is displayed")
         composeTestRule.onNode(
-            hasText(getStringResource(R.string.browser_menu_discover_more_extensions)), useUnmergedTree = true,
+            hasText(getStringResource(R.string.browser_menu_discover_more_extensions)),
+            useUnmergedTree = true,
         ).assertIsDisplayed()
         Log.i(TAG, "verifyRecommendedAddonsViewFromRedesignedMainMenu: Verified that that the \"Discover more extensions\" button is displayed")
     }
@@ -374,16 +377,54 @@ class SettingsSubMenuAddonsManagerRobot {
                 Log.i(TAG, "verifyTheRecommendedAddons: AssertionError caught, executing fallback methods")
                 if (i == RETRY_COUNT) {
                     throw e
+                } else {
+                    Log.i(TAG, "verifyTheRecommendedAddons: Trying to click device back button to dismiss the main menu")
+                    mDevice.pressBack()
+                    Log.i(TAG, "verifyTheRecommendedAddons: Clicked device back button to dismiss the main menu")
+                    waitForAppWindowToBeUpdated()
+                    browserScreen {
+                    }.openThreeDotMenu(composeTestRule) {
+                        verifyTryRecommendedExtensionButton()
+                    }.openExtensionsFromMainMenu {
+                    }
                 }
             }
         }
     }
 
-    fun installRecommendedAddon(recommendedExtensionTitle: String, composeTestRule: ComposeTestRule) {
-        waitForAppWindowToBeUpdated()
-        Log.i(TAG, "installARecommendedAddons: Trying to click addon: $recommendedExtensionTitle install button")
-        composeTestRule.onNodeWithContentDescription("Add $recommendedExtensionTitle", substring = true).performClick()
-        Log.i(TAG, "installARecommendedAddons: Clicked addon: $recommendedExtensionTitle install button")
+    fun installRecommendedAddon(composeTestRule: ComposeTestRule): String {
+        var recommendedExtensionTitle = ""
+
+        repeat(RETRY_COUNT) { i ->
+            val attempt = i + 1
+            Log.i(TAG, "installRecommendedAddon: Started try #$attempt")
+            try {
+                recommendedExtensionTitle = getRecommendedExtensionTitle(composeTestRule)
+                waitForAppWindowToBeUpdated()
+                Log.i(TAG, "installRecommendedAddon: Trying to click addon: $recommendedExtensionTitle install button")
+                composeTestRule.onNodeWithContentDescription("Add $recommendedExtensionTitle", substring = true).performClick()
+                Log.i(TAG, "installRecommendedAddon: Clicked addon: $recommendedExtensionTitle install button")
+
+                return recommendedExtensionTitle
+            } catch (e: AssertionError) {
+                Log.i(TAG, "installRecommendedAddon: AssertionError caught, executing fallback methods")
+                if (attempt == RETRY_COUNT) {
+                    throw e
+                } else {
+                    Log.i(TAG, "installRecommendedAddon: Trying to click device back button to dismiss the main menu")
+                    mDevice.pressBack()
+                    Log.i(TAG, "installRecommendedAddon: Clicked device back button to dismiss the main menu")
+                    waitForAppWindowToBeUpdated()
+                    browserScreen {
+                    }.openThreeDotMenu(composeTestRule) {
+                        verifyTryRecommendedExtensionButton()
+                    }.openExtensionsFromMainMenu {
+                        recommendedExtensionTitle = getRecommendedExtensionTitle(composeTestRule)
+                    }
+                }
+            }
+        }
+        return recommendedExtensionTitle
     }
 
     fun verifyManageExtensionsButtonFromRedesignedMainMenu(composeTestRule: ComposeTestRule, isDisplayed: Boolean) {
@@ -490,17 +531,17 @@ class SettingsSubMenuAddonsManagerRobot {
         onView(
             allOf(
                 withContentDescription("Install $addonName"),
-                isDescendantOfA(withId(R.id.add_on_item)),
+                isDescendantOfA(withId(addonsR.id.add_on_item)),
                 hasSibling(hasDescendant(withText(addonName))),
             ),
         )
 
     private fun cancelInstall() {
         Log.i(TAG, "cancelInstall: Trying to verify that the \"Cancel\" button is completely displayed")
-        onView(allOf(withId(R.id.deny_button), withText("Cancel"))).check(matches(isCompletelyDisplayed()))
+        onView(allOf(withId(addonsR.id.deny_button), withText("Cancel"))).check(matches(isCompletelyDisplayed()))
         Log.i(TAG, "cancelInstall: Verified that the \"Cancel\" button is completely displayed")
         Log.i(TAG, "cancelInstall: Trying to click the \"Cancel\" button")
-        onView(allOf(withId(R.id.deny_button), withText("Cancel"))).perform(click())
+        onView(allOf(withId(addonsR.id.deny_button), withText("Cancel"))).perform(click())
         Log.i(TAG, "cancelInstall: Clicked the \"Cancel\" button")
     }
 
@@ -508,7 +549,7 @@ class SettingsSubMenuAddonsManagerRobot {
         Log.i(TAG, "allowPermissionToInstall: Trying to click the \"Add\" button")
         itemWithResIdContainingText(
             "$packageName:id/allow_button",
-            getStringResource(R.string.mozac_feature_addons_permissions_dialog_add),
+            getStringResource(addonsR.string.mozac_feature_addons_permissions_dialog_add),
         ).click()
         Log.i(TAG, "allowPermissionToInstall: Clicked the \"Add\" button")
     }
@@ -557,10 +598,10 @@ private fun scrollToAddon(addonName: String) {
 private fun addonItem(addonName: String) =
     onView(
         allOf(
-            withId(R.id.add_on_item),
+            withId(addonsR.id.add_on_item),
             hasDescendant(
                 allOf(
-                    withId(R.id.add_on_name),
+                    withId(addonsR.id.add_on_name),
                     withText(addonName),
                 ),
             ),

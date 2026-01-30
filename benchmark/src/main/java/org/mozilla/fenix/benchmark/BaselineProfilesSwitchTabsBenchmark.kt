@@ -8,17 +8,20 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
-import androidx.annotation.RequiresApi
 import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
+import androidx.core.net.toUri
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.mozilla.fenix.benchmark.utils.EXTRA_COMPOSABLE_TOOLBAR
+import org.mozilla.fenix.benchmark.utils.FENIX_HOME_DEEP_LINK
+import org.mozilla.fenix.benchmark.utils.HtmlAsset
+import org.mozilla.fenix.benchmark.utils.MockWebServerRule
 import org.mozilla.fenix.benchmark.utils.ParameterizedToolbarsTest
 import org.mozilla.fenix.benchmark.utils.TARGET_PACKAGE
 import org.mozilla.fenix.benchmark.utils.closeAllTabs
@@ -28,6 +31,7 @@ import org.mozilla.fenix.benchmark.utils.measureRepeatedDefault
 import org.mozilla.fenix.benchmark.utils.openNewTabOnTabsTray
 import org.mozilla.fenix.benchmark.utils.openTabsTray
 import org.mozilla.fenix.benchmark.utils.switchTabs
+import org.mozilla.fenix.benchmark.utils.url
 
 /**
  * This test class benchmarks the speed of opening 2 new tabs and switching between them. Run this
@@ -56,13 +60,15 @@ import org.mozilla.fenix.benchmark.utils.switchTabs
  * and the [instrumentation arguments documentation](https://d.android.com/topic/performance/benchmarking/macrobenchmark-instrumentation-args).
  **/
 @RunWith(Parameterized::class)
-@RequiresApi(Build.VERSION_CODES.N)
 @BaselineProfileMacrobenchmark
 class BaselineProfilesSwitchTabsBenchmark(
     private val useComposableToolbar: Boolean,
 ): ParameterizedToolbarsTest() {
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
+
+    @get:Rule
+    val mockRule = MockWebServerRule()
 
     @Test
     fun switchTabsNone() = switchTabsBenchmark(CompilationMode.None())
@@ -83,22 +89,22 @@ class BaselineProfilesSwitchTabsBenchmark(
                 pressHome()
             },
         ) {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("fenix-nightly://home"))
+            val intent = Intent(Intent.ACTION_VIEW, FENIX_HOME_DEEP_LINK)
                 .putExtra(EXTRA_COMPOSABLE_TOOLBAR, useComposableToolbar)
-
             intent.setPackage(packageName)
 
             startActivityAndWait(intent = intent)
 
             device.enterSearchMode(useComposableToolbar)
-            device.loadSite(url = "example.com", useComposableToolbar)
+            val simpleHtmlUrl = mockRule.url(HtmlAsset.SIMPLE)
+            device.loadSite(url = simpleHtmlUrl, useComposableToolbar)
 
             device.openTabsTray(useComposableToolbar)
             device.openNewTabOnTabsTray()
-            device.loadSite(url = "https://www.mozilla.org/credits/", useComposableToolbar)
+            device.loadSite(url = mockRule.url(HtmlAsset.LONG), useComposableToolbar)
 
             device.openTabsTray(useComposableToolbar)
-            device.switchTabs(siteName = "Example Domain", newTabUrl = "http://example.com")
+            device.switchTabs(siteName = HtmlAsset.SIMPLE.title, newTabUrl = simpleHtmlUrl)
 
             device.openTabsTray(useComposableToolbar)
             device.closeAllTabs()

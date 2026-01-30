@@ -8,7 +8,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.compose.base.menu.MenuItem
 import mozilla.components.compose.base.text.Text
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,7 +15,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.tabstray.ext.generateMenuItems
 import org.mozilla.fenix.tabstray.ext.generateMultiSelectBannerMenuItems
 import org.mozilla.fenix.tabstray.ext.getMenuItems
 import org.mozilla.fenix.tabstray.ext.isSelect
@@ -34,7 +32,6 @@ class TabsTrayStateTest {
     @Test
     fun `WHEN entering select mode THEN isSelected extension method returns true`() {
         store.dispatch(TabsTrayAction.EnterSelectMode)
-        store.waitUntilIdle()
 
         assertTrue(store.state.mode.isSelect())
     }
@@ -42,7 +39,6 @@ class TabsTrayStateTest {
     @Test
     fun `WHEN entering normal mode THEN isSelected extension method returns false`() {
         store.dispatch(TabsTrayAction.ExitSelectMode)
-        store.waitUntilIdle()
 
         assertFalse(store.state.mode.isSelect())
     }
@@ -219,111 +215,66 @@ class TabsTrayStateTest {
         )
     }
 
+    /**
+    *  [TabsTrayState.searchIconVisible] coverage
+    */
+
     @Test
-    fun `GIVEN the Tabs Tray is not in multiselection mode AND on the normal tabs page AND no normal tabs are open WHEN the user clicks on the three-dot button THEN the tab settings and recently closed tabs menu items are returned`() {
-        val menuItems = initMenuItemsFromState()
-        assertEquals(menuItems.size, 2)
-        assertEquals(
-            (menuItems[0] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_tab_settings),
-        )
-        assertEquals(
-            (menuItems[1] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_recently_closed),
-        )
+    fun `WHEN the user is on the normal tabs page THEN the search icon is visible`() {
+        val testState = TabsTrayState(selectedPage = Page.NormalTabs)
+        assertTrue(testState.searchIconVisible)
     }
 
     @Test
-    fun `GIVEN the Tabs Tray is not in multiselection mode AND on the normal tabs page AND at least 1 normal is open WHEN the user clicks on the three-dot button THEN the select tabs, share all tabs, tab settings, recently closed tabs, and close all tabs menu items are returned`() {
-        val menuItems = initMenuItemsFromState(
-            state = TabsTrayState(
-                normalTabs = List(size = 3) {
-                    createTab("")
-                },
-            ),
-        )
-        assertEquals(menuItems.size, 5)
-        assertEquals(
-            (menuItems[0] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tabs_tray_select_tabs),
-        )
-        assertEquals(
-            (menuItems[1] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_item_share),
-        )
-        assertEquals(
-            (menuItems[2] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_tab_settings),
-        )
-        assertEquals(
-            (menuItems[3] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_recently_closed),
-        )
-        assertEquals(
-            (menuItems[4] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_item_close),
-        )
+    fun `WHEN the user is on the private tabs page THEN the search icon is visible`() {
+        val testState = TabsTrayState(selectedPage = Page.PrivateTabs)
+        assertTrue(testState.searchIconVisible)
     }
 
     @Test
-    fun `GIVEN the Tabs Tray is not in multiselection mode AND on the private tabs page AND no tabs are open WHEN the user clicks on the three-dot button THEN the tab settings and recently closed tabs menu items are returned`() {
-        val menuItems = initMenuItemsFromState(
-            state = TabsTrayState(
-                selectedPage = Page.PrivateTabs,
-            ),
+    fun `WHEN the user is on the synced tabs page THEN the search icon is not visible`() {
+        val testState = TabsTrayState(selectedPage = Page.SyncedTabs)
+        assertFalse(testState.searchIconVisible)
+    }
+
+    /**
+     *  [TabsTrayState.searchIconEnabled] coverage
+     */
+
+    @Test
+    fun `GIVEN the user has no normal tabs open WHEN the user is on the normal tabs page THEN the search icon is disabled`() {
+        val testState = TabsTrayState(
+            selectedPage = Page.NormalTabs,
+            normalTabs = emptyList(),
         )
-        assertEquals(menuItems.size, 2)
-        assertEquals(
-            (menuItems[0] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_tab_settings),
-        )
-        assertEquals(
-            (menuItems[1] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_recently_closed),
-        )
+        assertFalse(testState.searchIconEnabled)
     }
 
     @Test
-    fun `GIVEN the Tabs Tray is not in multiselection mode AND on the private tabs page AND at least 1 private tab is open WHEN the user clicks on the three-dot button THEN the tab settings, recently closed tabs, and close all tabs menu items are returned`() {
-        val menuItems = initMenuItemsFromState(
-            state = TabsTrayState(
-                selectedPage = Page.PrivateTabs,
-                privateTabs = List(size = 3) {
-                    createTab("")
-                },
-            ),
+    fun `GIVEN the user has at least one normal tab open WHEN the user is on the normal tabs page THEN the search icon is disabled`() {
+        val testState = TabsTrayState(
+            selectedPage = Page.NormalTabs,
+            normalTabs = listOf(createTab(url = "url")),
         )
-        assertEquals(menuItems.size, 3)
-        assertEquals(
-            (menuItems[0] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_tab_settings),
-        )
-        assertEquals(
-            (menuItems[1] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_recently_closed),
-        )
-        assertEquals(
-            (menuItems[2] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_item_close),
-        )
+        assertTrue(testState.searchIconEnabled)
     }
 
     @Test
-    fun `GIVEN the Tabs Tray is not in multiselection mode AND on the synced tabs page WHEN the user clicks on the three-dot button THEN the account settings and recently closed tabs menu items are returned`() {
-        val menuItems = initMenuItemsFromState(
-            state = TabsTrayState(
-                selectedPage = Page.SyncedTabs,
-            ),
+    fun `GIVEN the user has no private tabs open WHEN the user is on the private tabs page THEN the search icon is disabled`() {
+        val testState = TabsTrayState(
+            selectedPage = Page.PrivateTabs,
+            privateTabs = emptyList(),
         )
-        assertEquals(menuItems.size, 2)
-        assertEquals(
-            (menuItems[0] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_account_settings),
+        assertFalse(testState.searchIconEnabled)
+    }
+
+    @Test
+    fun `GIVEN the user has at least one private tab open WHEN the user is on the private tabs page THEN the search icon is disabled`() {
+        val testState = TabsTrayState(
+            selectedPage = Page.PrivateTabs,
+            privateTabs = listOf(createTab(url = "url")),
         )
-        assertEquals(
-            (menuItems[1] as MenuItem.TextItem).text,
-            Text.Resource(R.string.tab_tray_menu_recently_closed),
-        )
+        assertTrue(testState.searchIconEnabled)
     }
 
     private fun initMenuItems(
@@ -341,18 +292,6 @@ class TabsTrayStateTest {
             onBookmarkSelectedTabsClick = {},
             onCloseSelectedTabsClick = {},
             onMakeSelectedTabsInactive = {},
-            onTabSettingsClick = {},
-            onRecentlyClosedClick = {},
-            onEnterMultiselectModeClick = {},
-            onShareAllTabsClick = {},
-            onDeleteAllTabsClick = {},
-            onAccountSettingsClick = {},
-        )
-
-    private fun initMenuItemsFromState(
-        state: TabsTrayState = TabsTrayState(),
-    ): List<MenuItem> =
-        state.generateMenuItems(
             onTabSettingsClick = {},
             onRecentlyClosedClick = {},
             onEnterMultiselectModeClick = {},

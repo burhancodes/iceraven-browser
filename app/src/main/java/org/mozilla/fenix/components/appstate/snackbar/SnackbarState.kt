@@ -7,6 +7,7 @@ package org.mozilla.fenix.components.appstate.snackbar
 import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.concept.storage.BookmarkNode
 import mozilla.components.concept.sync.TabData
+import org.mozilla.fenix.bookmarks.BookmarksGlobalResultReport
 
 /**
  * The state of the snackbar to display.
@@ -36,11 +37,6 @@ sealed class SnackbarState {
     data object ShortcutAdded : SnackbarState()
 
     /**
-     * Display a snackbar of the removed shortcut.
-     */
-    data object ShortcutRemoved : SnackbarState()
-
-    /**
      * Display a snackbar when deleting browsing data before quitting.
      */
     data object DeletingBrowserDataInProgress : SnackbarState()
@@ -62,6 +58,12 @@ sealed class SnackbarState {
      * @property title The title of the bookmark that was deleted.
      */
     data class BookmarkDeleted(val title: String?) : SnackbarState()
+
+    /**
+     * Display a snackbar informing of the result of an operation in the bookmarks
+     * feature that must be reported globally.
+     */
+    data class BookmarkOperationResultReported(val result: BookmarksGlobalResultReport) : SnackbarState()
 
     /**
      * There is a translation in progression for the given [sessionId].
@@ -126,11 +128,6 @@ sealed class SnackbarState {
      * Display a snackbar when the WebCompat report has been successfully submitted.
      */
     data object WebCompatReportSent : SnackbarState()
-
-    /**
-     * Display a snackbar when the current site's data has been deleted.
-     */
-    data object SiteDataCleared : SnackbarState()
 
     /**
      * Display a snackbar when the current tab has been closed.

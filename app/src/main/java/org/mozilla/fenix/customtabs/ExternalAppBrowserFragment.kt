@@ -53,7 +53,7 @@ class ExternalAppBrowserFragment : BaseBrowserFragment() {
     private val windowFeature = ViewBoundFeatureWrapper<CustomTabWindowFeature>()
     private val hideToolbarFeature = ViewBoundFeatureWrapper<WebAppHideToolbarFeature>()
 
-    @Suppress("LongMethod", "ComplexMethod")
+    @Suppress("LongMethod")
     override fun initializeUI(view: View, tab: SessionState) {
         super.initializeUI(view, tab)
 
@@ -201,20 +201,35 @@ class ExternalAppBrowserFragment : BaseBrowserFragment() {
                 )
                 withContext(Dispatchers.Main) {
                     runIfFragmentIsAttached {
-                        val directions = ExternalAppBrowserFragmentDirections
-                            .actionGlobalQuickSettingsSheetDialogFragment(
+                        val directions = if (requireContext().settings().enableUnifiedTrustPanel) {
+                            ExternalAppBrowserFragmentDirections.actionGlobalTrustPanelFragment(
                                 sessionId = tab.id,
                                 url = tab.content.url,
                                 title = tab.content.title,
                                 isLocalPdf = tab.content.url.isContentUrl(),
-                                isSecured = tab.content.securityInfo.secure,
+                                isSecured = tab.content.securityInfo.isSecure,
                                 sitePermissions = sitePermissions,
-                                gravity = getAppropriateLayoutGravity(),
                                 certificateName = tab.content.securityInfo.issuer,
                                 permissionHighlights = tab.content.permissionHighlights,
                                 isTrackingProtectionEnabled = tab.trackingProtection.enabled && !contains,
                                 cookieBannerUIMode = cookieBannerUIMode,
                             )
+                        } else {
+                            ExternalAppBrowserFragmentDirections
+                                .actionGlobalQuickSettingsSheetDialogFragment(
+                                    sessionId = tab.id,
+                                    url = tab.content.url,
+                                    title = tab.content.title,
+                                    isLocalPdf = tab.content.url.isContentUrl(),
+                                    isSecured = tab.content.securityInfo.isSecure,
+                                    sitePermissions = sitePermissions,
+                                    gravity = getAppropriateLayoutGravity(),
+                                    certificateName = tab.content.securityInfo.issuer,
+                                    permissionHighlights = tab.content.permissionHighlights,
+                                    isTrackingProtectionEnabled = tab.trackingProtection.enabled && !contains,
+                                    cookieBannerUIMode = cookieBannerUIMode,
+                                )
+                        }
                         nav(R.id.externalAppBrowserFragment, directions)
                     }
                 }

@@ -16,11 +16,13 @@ import org.mozilla.fenix.helpers.Constants.TAG
 import org.mozilla.fenix.helpers.DataGenerationHelper.getStringResource
 import org.mozilla.fenix.helpers.MatcherHelper.assertItemTextEquals
 import org.mozilla.fenix.helpers.MatcherHelper.assertUIObjectExists
+import org.mozilla.fenix.helpers.MatcherHelper.assertUIObjectIsGone
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithText
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.click
+import mozilla.components.feature.sitepermissions.R as sitepermissionsR
 
 class SitePermissionsRobot {
     fun verifyMicrophonePermissionPrompt(host: String) {
@@ -81,6 +83,12 @@ class SitePermissionsRobot {
                 assertItemTextEquals(allowPagePermissionButton(), expectedText = "Allow")
             }
         }
+    }
+
+    fun verifyDoNotAskAgainIsHidden() {
+        Log.i(TAG, "verifyDoNotAskAgainIsHidden: asserting that the \"Remember decision for this site\" check box does not exist")
+        assertUIObjectIsGone(doNotAskAgainCheckBox())
+        Log.i(TAG, "verifyDoNotAskAgainIsHidden: asserted that the \"Remember decision for this site\" check box does not exist")
     }
 
     fun verifyNotificationsPermissionPrompt(host: String, blocked: Boolean = false) {
@@ -152,7 +160,7 @@ class SitePermissionsRobot {
         onView(ViewMatchers.withText("Allow $originHost to use its cookies on $currentHost?")).check(matches(isDisplayed()))
         Log.i(TAG, "verifyCrossOriginCookiesPermissionPrompt: Verified that the the storage access permission prompt title is displayed")
         Log.i(TAG, "verifyCrossOriginCookiesPermissionPrompt: Trying to verify that the storage access permission prompt message is displayed")
-        onView(ViewMatchers.withText(getStringResource(R.string.mozac_feature_sitepermissions_storage_access_message, originHost))).check(matches(isDisplayed()))
+        onView(ViewMatchers.withText(getStringResource(sitepermissionsR.string.mozac_feature_sitepermissions_storage_access_message, originHost))).check(matches(isDisplayed()))
         Log.i(TAG, "verifyCrossOriginCookiesPermissionPrompt: Verified that the storage access permission prompt message is displayed")
         Log.i(TAG, "verifyCrossOriginCookiesPermissionPrompt: Trying to verify that the storage access permission prompt learn more link is displayed")
         onView(ViewMatchers.withText("Learn more")).check(matches(isDisplayed()))
@@ -171,13 +179,25 @@ class SitePermissionsRobot {
             .waitForExists(waitingTime)
         Log.i(TAG, "selectRememberPermissionDecision: Waited for $waitingTime ms for the \"Remember decision for this site\" check box to exist")
         Log.i(TAG, "selectRememberPermissionDecision: Trying to click the \"Remember decision for this site\" check box")
-        onView(withId(R.id.do_not_ask_again))
+        onView(withId(sitepermissionsR.id.do_not_ask_again))
             .check(matches(isDisplayed()))
             .click()
         Log.i(TAG, "selectRememberPermissionDecision: Clicked the \"Remember decision for this site\" check box")
     }
 
     class Transition {
+
+        fun clickLearnMore(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
+            Log.i(TAG, "clickLearnMore: Waiting for $waitingTime ms for the Learn more link to exist")
+            learnMoreText().waitForExists(waitingTime)
+            Log.i(TAG, "clickLearnMore: Waited for $waitingTime ms for the Learn more link to exist")
+            Log.i(TAG, "clickLearnMore: Trying to click the Learn more link")
+            learnMoreText().click()
+            Log.i(TAG, "clickLearnMore: Clicked the Learn more link")
+            BrowserRobot().interact()
+            return BrowserRobot.Transition()
+        }
+
         fun clickPagePermissionButton(allow: Boolean, interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             if (allow) {
                 Log.i(TAG, "clickPagePermissionButton: Waiting for $waitingTime ms for the \"Allow\" prompt button to exist")
@@ -225,3 +245,9 @@ private fun allowPagePermissionButton() =
 
 private fun denyPagePermissionButton() =
     mDevice.findObject(UiSelector().resourceId("$packageName:id/deny_button"))
+
+private fun learnMoreText() =
+    mDevice.findObject(UiSelector().resourceId("$packageName:id/learn_more"))
+
+private fun doNotAskAgainCheckBox() =
+    mDevice.findObject(UiSelector().resourceId("$packageName:id/do_not_ask_again"))

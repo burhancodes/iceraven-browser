@@ -14,16 +14,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import mozilla.components.compose.base.button.FloatingActionButton
 import mozilla.components.lib.state.ext.observeAsState
 import org.mozilla.fenix.R
-import org.mozilla.fenix.compose.button.FloatingActionButton
 import org.mozilla.fenix.theme.FirefoxTheme
+import mozilla.components.ui.icons.R as iconsR
 
 /**
  * Floating action button for tabs tray.
  *
  * @param tabsTrayStore [TabsTrayStore] used to listen for changes to [TabsTrayState].
  * @param isSignedIn Used to know when to show the SYNC FAB when [Page.SyncedTabs] is displayed.
+ * @param isPbmLocked Whether the private browsing mode is currently locked.
  * @param onNormalTabsFabClicked Invoked when the fab is clicked in [Page.NormalTabs].
  * @param onPrivateTabsFabClicked Invoked when the fab is clicked in [Page.PrivateTabs].
  * @param onSyncedTabsFabClicked Invoked when the fab is clicked in [Page.SyncedTabs].
@@ -32,6 +34,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 fun TabsTrayFab(
     tabsTrayStore: TabsTrayStore,
     isSignedIn: Boolean,
+    isPbmLocked: Boolean = false,
     onNormalTabsFabClicked: () -> Unit,
     onPrivateTabsFabClicked: () -> Unit,
     onSyncedTabsFabClicked: () -> Unit,
@@ -46,6 +49,13 @@ fun TabsTrayFab(
         initialValue = tabsTrayStore.state.mode == TabsTrayState.Mode.Normal,
     ) { state -> state.mode == TabsTrayState.Mode.Normal }
 
+    val shouldDisplayFloatingActionButton = shouldDisplayFloatingActionButton(
+        isPbmLocked,
+        currentPage,
+        isInNormalMode,
+        isSignedIn,
+    )
+
     val icon: Painter
     val contentDescription: String
     val label: String?
@@ -53,7 +63,7 @@ fun TabsTrayFab(
 
     when (currentPage) {
         Page.NormalTabs -> {
-            icon = painterResource(id = R.drawable.ic_new)
+            icon = painterResource(id = iconsR.drawable.mozac_ic_plus_24)
             contentDescription = stringResource(id = R.string.add_tab)
             label = null
             onClick = onNormalTabsFabClicked
@@ -71,14 +81,14 @@ fun TabsTrayFab(
         }
 
         Page.PrivateTabs -> {
-            icon = painterResource(id = R.drawable.ic_new)
+            icon = painterResource(id = iconsR.drawable.mozac_ic_plus_24)
             contentDescription = stringResource(id = R.string.add_private_tab)
             label = stringResource(id = R.string.tab_drawer_fab_content).uppercase()
             onClick = onPrivateTabsFabClicked
         }
     }
 
-    if (isInNormalMode && !(currentPage == Page.SyncedTabs && !isSignedIn)) {
+    if (shouldDisplayFloatingActionButton) {
         FloatingActionButton(
             icon = icon,
             modifier = Modifier
@@ -89,6 +99,18 @@ fun TabsTrayFab(
             onClick = onClick,
         )
     }
+}
+
+private fun shouldDisplayFloatingActionButton(
+    isPbmLocked: Boolean,
+    currentPage: Page,
+    isInNormalMode: Boolean,
+    isSignedIn: Boolean,
+): Boolean {
+    val privateTabsLocked = isPbmLocked && currentPage == Page.PrivateTabs
+    val shouldDisplayFloatingActionButton =
+        isInNormalMode && !(currentPage == Page.SyncedTabs && !isSignedIn) && !privateTabsLocked
+    return shouldDisplayFloatingActionButton
 }
 
 @PreviewLightDark

@@ -20,7 +20,6 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.experiments.nimbus.internal.EnrolledExperiment
 import org.mozilla.fenix.webcompat.di.WebCompatReporterMiddlewareProvider
 import org.mozilla.fenix.webcompat.fake.FakeEngineSession
 import org.mozilla.fenix.webcompat.testdata.WebCompatTestData
@@ -31,48 +30,6 @@ class DefaultWebCompatReporterRetrievalServiceTest {
 
     @get:Rule
     val coroutinesTestRule = MainCoroutineRule()
-
-    @Test
-    fun `WHEN Nimbus is disabled THEN WebCompatInfo has no experiments`() = runTest {
-        val nimbusExperimentsProvider = FakeNimbusExperimentsProvider()
-        val engineSession = FakeEngineSession(WebCompatTestData.basicDataJson)
-        val service = createService(engineSession = engineSession, nimbusExperimentsProvider)
-
-        assertEquals(emptyList<WebCompatInfoDto.WebCompatBrowserDto>(), service.retrieveInfo()?.browser?.experiments)
-    }
-
-    @Test
-    fun `WHEN Nimbus is enabled but no experiments THEN WebCompatInfo experiments is null`() = runTest {
-        val nimbusExperimentsProvider = FakeNimbusExperimentsProvider()
-        val engineSession = FakeEngineSession(WebCompatTestData.basicDataJson)
-        val service = createService(engineSession = engineSession, nimbusExperimentsProvider)
-
-        assertEquals(emptyList<WebCompatInfoDto.WebCompatBrowserDto>(), service.retrieveInfo()?.browser?.experiments)
-    }
-
-    @Test
-    fun `WHEN Nimbus is enabled THEN WebCompatInfo has all active experiments`() = runTest {
-        val experiments = listOf(
-            EnrolledExperiment(
-                slug = "expSlug",
-                branchSlug = "expBranch",
-                featureIds = listOf("expFeatureId"),
-                userFacingName = "expDame",
-                userFacingDescription = "expDescription",
-            ),
-        )
-
-        val nimbusExperimentsProvider = FakeNimbusExperimentsProvider(experiments) { slug ->
-            experiments.firstOrNull { it.slug == slug }?.branchSlug ?: "none"
-        }
-        val engineSession = FakeEngineSession(WebCompatTestData.basicDataJson)
-        val service = createService(engineSession = engineSession, nimbusExperimentsProvider)
-        val actual = service.retrieveInfo()?.browser?.experiments
-        val expected = listOf(
-            WebCompatInfoDto.WebCompatBrowserDto.ExperimentDto(branch = "expBranch", slug = "expSlug", kind = "nimbusExperiment"),
-        )
-        assertEquals(expected, actual)
-    }
 
     @Test
     fun `WHEN WebCompatInfo is retrieved successfully THEN all corresponding fields in the DTO are submitted`() = runTest {
@@ -89,6 +46,7 @@ class DefaultWebCompatReporterRetrievalServiceTest {
                 hasMixedDisplayContentBlocked = false,
                 hasTrackingContentBlocked = false,
                 isPrivateBrowsing = false,
+                blockedOrigins = listOf("https://blockedUrlExample.com"),
             ),
             browser = WebCompatInfoDto.WebCompatBrowserDto(
                 addons = listOf(
@@ -98,7 +56,6 @@ class DefaultWebCompatReporterRetrievalServiceTest {
                 app = WebCompatInfoDto.WebCompatBrowserDto.AppDto(
                     defaultUserAgent = "testDefaultUserAgent",
                 ),
-                experiments = emptyList(),
                 graphics = WebCompatInfoDto.WebCompatBrowserDto.GraphicsDto(
                     devices = buildJsonArray {
                         addJsonObject {
@@ -186,6 +143,7 @@ class DefaultWebCompatReporterRetrievalServiceTest {
                 hasMixedDisplayContentBlocked = false,
                 hasTrackingContentBlocked = false,
                 isPrivateBrowsing = false,
+                blockedOrigins = listOf("https://blockedUrlExample.com", "https://blockedUrlExample2.com"),
             ),
             browser = WebCompatInfoDto.WebCompatBrowserDto(
                 addons = listOf(
@@ -195,7 +153,6 @@ class DefaultWebCompatReporterRetrievalServiceTest {
                 app = WebCompatInfoDto.WebCompatBrowserDto.AppDto(
                     defaultUserAgent = "testDefaultUserAgent",
                 ),
-                experiments = emptyList(),
                 graphics = WebCompatInfoDto.WebCompatBrowserDto.GraphicsDto(
                     devices = buildJsonArray {
                         addJsonObject {
@@ -260,7 +217,7 @@ class DefaultWebCompatReporterRetrievalServiceTest {
         assertEquals(expected, actual)
     }
 
-    private fun createService(engineSession: EngineSession, nimbusExperimentsProvider: NimbusExperimentsProvider = FakeNimbusExperimentsProvider()): WebCompatReporterRetrievalService {
+    private fun createService(engineSession: EngineSession): WebCompatReporterRetrievalService {
         val tab = createTab(
             url = "https://www.mozilla.org",
             id = "test-tab",
@@ -276,7 +233,6 @@ class DefaultWebCompatReporterRetrievalServiceTest {
         return DefaultWebCompatReporterRetrievalService(
             browserStore = browserStore,
             webCompatInfoDeserializer = webCompatInfoDeserializer,
-            nimbusExperimentsProvider = nimbusExperimentsProvider,
         )
     }
 }

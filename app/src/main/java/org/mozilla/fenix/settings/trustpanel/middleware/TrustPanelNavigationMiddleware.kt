@@ -31,7 +31,7 @@ class TrustPanelNavigationMiddleware(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : Middleware<TrustPanelState, TrustPanelAction> {
 
-    @Suppress("CyclomaticComplexMethod", "LongMethod")
+    @Suppress("CyclomaticComplexMethod")
     override fun invoke(
         context: MiddlewareContext<TrustPanelState, TrustPanelAction>,
         next: (TrustPanelAction) -> Unit,
@@ -43,7 +43,7 @@ class TrustPanelNavigationMiddleware(
             when (action) {
                 is TrustPanelAction.Navigate.PrivacySecuritySettings -> navController.nav(
                     R.id.trustPanelFragment,
-                    TrustPanelFragmentDirections.actionGlobalSettingsFragment(
+                    TrustPanelFragmentDirections.actionGlobalTrackingProtectionFragment(
                         preferenceToScrollTo = privacySecurityPrefKey,
                     ),
                 )

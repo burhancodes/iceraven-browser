@@ -32,6 +32,7 @@ import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.home.HomeFragment
 import org.mozilla.fenix.home.HomeMenuView
 import org.mozilla.fenix.search.toolbar.SearchSelector
+import org.mozilla.fenix.settings.deletebrowsingdata.DeleteBrowsingDataController
 import org.mozilla.fenix.utils.ToolbarPopupWindow
 import java.lang.ref.WeakReference
 
@@ -43,6 +44,7 @@ internal class HomeToolbarView(
     private val interactor: ToolbarInteractor,
     private val homeFragment: HomeFragment,
     private val homeActivity: HomeActivity,
+    private val deleteBrowsingDataController: DeleteBrowsingDataController,
 ) : FenixHomeToolbar {
     private var context = homeFragment.requireContext()
 
@@ -141,7 +143,9 @@ internal class HomeToolbarView(
      *
      * @param id The resource ID of the drawable to use as the background.
      */
-    fun updateBackground(@DrawableRes id: Int) {
+    fun updateBackground(
+        @DrawableRes id: Int,
+    ) {
         toolbarBinding.toolbar.setBackgroundResource(id)
     }
 
@@ -161,6 +165,7 @@ internal class HomeToolbarView(
         navController = homeFragment.findNavController(),
         fenixBrowserUseCases = context.components.useCases.fenixBrowserUseCases,
         menuButton = WeakReference(toolbarBinding.menuButton),
+        deleteBrowsingDataController = deleteBrowsingDataController,
     ).also { it.build() }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -224,14 +229,18 @@ internal class HomeToolbarView(
                     context.theme.resolveAttribute(R.attr.bottomBarBackgroundTop),
                 )
 
+                val topPadding = context.pixelSizeFor(R.dimen.home_fragment_top_toolbar_header_margin) +
+                    if (isTabletAndTabStripEnabled) {
+                        context.pixelSizeFor(R.dimen.tab_strip_height)
+                    } else {
+                        0
+                    }
+
                 homeBinding.homeAppBar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    topMargin =
-                        context.pixelSizeFor(R.dimen.home_fragment_top_toolbar_header_margin) +
-                        if (isTabletAndTabStripEnabled) {
-                            context.pixelSizeFor(R.dimen.tab_strip_height)
-                        } else {
-                            0
-                        }
+                    topMargin = topPadding
+                }
+                homeBinding.homepageView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    bottomMargin = topPadding
                 }
             }
 

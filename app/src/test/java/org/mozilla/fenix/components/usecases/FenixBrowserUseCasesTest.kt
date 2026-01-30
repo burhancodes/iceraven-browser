@@ -10,6 +10,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import mozilla.components.browser.state.engine.EngineMiddleware
 import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SearchState
@@ -17,6 +18,7 @@ import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.base.profiler.Profiler
+import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.utils.ABOUT_HOME_URL
 import mozilla.components.feature.search.SearchUseCases
@@ -24,10 +26,15 @@ import mozilla.components.feature.search.ext.createSearchEngine
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.test.robolectric.testContext
+import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppState
 
 @RunWith(AndroidJUnit4::class)
 class FenixBrowserUseCasesTest {
@@ -40,6 +47,11 @@ class FenixBrowserUseCasesTest {
     private lateinit var searchUseCases: SearchUseCases
     private lateinit var defaultSearchUseCase: SearchUseCases.DefaultSearchUseCase
     private lateinit var useCases: FenixBrowserUseCases
+    private lateinit var homepageTitle: String
+    private lateinit var appStore: AppStore
+
+    @get:Rule
+    val coroutinesTestRule = MainCoroutineRule()
 
     @Before
     fun setup() {
@@ -67,6 +79,10 @@ class FenixBrowserUseCasesTest {
                     regionSearchEngines = listOf(searchEngine),
                 ),
             ),
+            middleware = EngineMiddleware.create(
+                mockk<Engine>(),
+                coroutinesTestRule.scope,
+            ),
         )
         defaultSearchUseCase = spyk(
             SearchUseCases(
@@ -78,12 +94,17 @@ class FenixBrowserUseCasesTest {
 
         every { searchUseCases.defaultSearch } returns defaultSearchUseCase
 
+        homepageTitle = testContext.getString(R.string.tab_tray_homepage_tab)
+
+        appStore = AppStore(AppState())
+
         useCases = FenixBrowserUseCases(
             addNewTabUseCase = addNewTabUseCase,
             loadUrlUseCase = loadUrlUseCase,
             searchUseCases = searchUseCases,
-            homepageTitle = testContext.getString(R.string.tab_tray_homepage_tab),
+            homepageTitle = homepageTitle,
             profiler = profiler,
+            appStore = appStore,
         )
     }
 
@@ -303,7 +324,7 @@ class FenixBrowserUseCasesTest {
             profiler.addMarker(
                 markerName = "FenixBrowserUseCases.loadUrlOrSearch",
                 startTime = PROFILER_START_TIME,
-                text = "newTab: $newTab",
+                text = "newTab: $newTab, private: false",
             )
         }
     }
@@ -315,7 +336,7 @@ class FenixBrowserUseCasesTest {
         verify {
             addNewTabUseCase.invoke(
                 url = ABOUT_HOME_URL,
-                title = testContext.getString(R.string.tab_tray_homepage_tab),
+                title = homepageTitle,
                 private = true,
             )
         }
@@ -325,7 +346,7 @@ class FenixBrowserUseCasesTest {
         verify {
             addNewTabUseCase.invoke(
                 url = ABOUT_HOME_URL,
-                title = testContext.getString(R.string.tab_tray_homepage_tab),
+                title = homepageTitle,
                 private = false,
             )
         }
@@ -339,6 +360,66 @@ class FenixBrowserUseCasesTest {
             loadUrlUseCase.invoke(
                 url = ABOUT_HOME_URL,
                 flags = EngineSession.LoadUrlFlags.none(),
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN store is normal WHEN normal omitted and loading URL in new tab THEN open new normal tab`() {
+        val url = "https://www.mozilla.org"
+        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Normal))
+        useCases = FenixBrowserUseCases(
+            appStore = appStore,
+            addNewTabUseCase = addNewTabUseCase,
+            loadUrlUseCase = loadUrlUseCase,
+            searchUseCases = searchUseCases,
+            homepageTitle = homepageTitle,
+            profiler = profiler,
+        )
+
+        useCases.loadUrlOrSearch(
+            searchTermOrURL = url,
+            newTab = true,
+            forceSearch = false,
+            searchEngine = null,
+        )
+
+        verify {
+            addNewTabUseCase.invoke(
+                url = url,
+                flags = EngineSession.LoadUrlFlags.none(),
+                private = false,
+                originalInput = url,
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN store is private WHEN private omitted and loading URL in new tab THEN open new private tab`() {
+        val url = "https://www.mozilla.org"
+        appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private))
+        useCases = FenixBrowserUseCases(
+            appStore = appStore,
+            addNewTabUseCase = addNewTabUseCase,
+            loadUrlUseCase = loadUrlUseCase,
+            searchUseCases = searchUseCases,
+            homepageTitle = homepageTitle,
+            profiler = profiler,
+        )
+
+        useCases.loadUrlOrSearch(
+            searchTermOrURL = url,
+            newTab = true,
+            forceSearch = false,
+            searchEngine = null,
+        )
+
+        verify {
+            addNewTabUseCase.invoke(
+                url = url,
+                flags = EngineSession.LoadUrlFlags.none(),
+                private = true,
+                originalInput = url,
             )
         }
     }

@@ -82,13 +82,11 @@ class NotificationRobot {
     fun verifyPrivateTabsNotification() {
         when (Build.VERSION.SDK_INT) {
             // For API 34 the notification is slightly different
-            Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
-                {
+            Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
                     verifySystemNotificationExists(getStringResource(R.string.notification_erase_title_android_14))
                     verifySystemNotificationExists(getStringResource(R.string.notification_erase_text_android_14))
                 }
-            else ->
-                {
+            else -> {
                     verifySystemNotificationExists("$appName (Private)")
                     verifySystemNotificationExists("Close private tabs")
                 }
@@ -189,6 +187,7 @@ class NotificationRobot {
 
                 var retries = 0
                 while (itemContainingText(appName).exists() && retries++ < 3) {
+                    Log.i(TAG, "swipeDownloadNotification: Started try #$retries to swipe $direction the download notification")
                     // Swipe left the download system notification
                     if (direction == "Left") {
                         itemContainingText(appName)
@@ -235,7 +234,7 @@ class NotificationRobot {
                 }
 
                 break
-            } catch (e: AssertionError) {
+            } catch (e: Throwable) {
                 Log.i(TAG, "swipeDownloadNotification: AssertionError caught, executing fallback methods")
                 if (i == RETRY_COUNT) {
                     throw e

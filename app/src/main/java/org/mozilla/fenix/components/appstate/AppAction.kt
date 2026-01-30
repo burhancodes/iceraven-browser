@@ -18,6 +18,7 @@ import mozilla.components.service.nimbus.messaging.MessageSurfaceId
 import mozilla.components.service.pocket.PocketStory.ContentRecommendation
 import mozilla.components.service.pocket.PocketStory.PocketSponsoredStory
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
+import org.mozilla.fenix.bookmarks.BookmarksGlobalResultReport
 import org.mozilla.fenix.browser.StandardSnackbarError
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.AppStore
@@ -138,11 +139,6 @@ sealed class AppAction : Action {
      * Action dispatched when the browser is deleting its data and quitting.
      */
     data object DeleteAndQuitStarted : AppAction()
-
-    /**
-     * Action dispatched when the current site's data has been cleared.
-     */
-    data object SiteDataCleared : AppAction()
 
     /**
      * Action dispatched when the current tab has been closed.
@@ -363,6 +359,16 @@ sealed class AppAction : Action {
          * @property title The title of the bookmark that was removed.
          */
         data class BookmarkDeleted(val title: String?) : BookmarkAction()
+
+        /**
+         * [BookmarkAction] dispatched when a bookmark operation has a result that must be
+         * reported even if the bookmark feature goes out of scope.
+         *
+         * @property globalResultReport The specific result to report.
+         */
+        data class BookmarkOperationResultReported(
+            val globalResultReport: BookmarksGlobalResultReport,
+        ) : BookmarkAction()
     }
 
     /**
@@ -403,11 +409,6 @@ sealed class AppAction : Action {
          * [ShortcutAction] dispatched when a shortcut is added.
          */
         data object ShortcutAdded : ShortcutAction()
-
-        /**
-         * [ShortcutAction] dispatched when a shortcut is removed.
-         */
-        data object ShortcutRemoved : ShortcutAction()
     }
 
     /**
@@ -763,5 +764,25 @@ sealed class AppAction : Action {
             val searchEngine: SearchEngine,
             val isUserSelected: Boolean,
         ) : SearchAction()
+    }
+
+    /**
+     * [AppAction]s related to menu notifications. These actions are used to manage
+     * the display and removal of notifications within the application's menu.
+     */
+    sealed class MenuNotification : AppAction() {
+        /**
+         * Dispatched to add a new notification to the menu.
+         *
+         * @property notification The [SupportedMenuNotifications] type to be displayed.
+         */
+        data class AddMenuNotification(val notification: SupportedMenuNotifications) : MenuNotification()
+
+        /**
+         * Dispatched to remove an existing notification from the menu.
+         *
+         * @property notification The [SupportedMenuNotifications] type to be removed.
+         */
+        data class RemoveMenuNotification(val notification: SupportedMenuNotifications) : MenuNotification()
     }
 }

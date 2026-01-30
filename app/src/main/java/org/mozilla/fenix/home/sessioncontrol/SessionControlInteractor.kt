@@ -251,6 +251,10 @@ class SessionControlInteractor(
         topSiteController.handleShowAllTopSitesClicked()
     }
 
+    override fun onShortcutsLibraryViewed() {
+        topSiteController.handleShortcutsLibraryViewed()
+    }
+
     override fun showWallpapersOnboardingDialog(state: WallpaperState): Boolean {
         return controller.handleShowWallpapersOnboardingDialog(state)
     }
@@ -371,6 +375,14 @@ class SessionControlInteractor(
 
     override fun onStoryClicked(storyClicked: PocketStory, storyPosition: Triple<Int, Int, Int>) {
         pocketStoriesController.handleStoryClicked(storyClicked, storyPosition)
+    }
+
+    override fun onDiscoverMoreClicked() {
+        pocketStoriesController.handleDiscoverMoreClicked()
+    }
+
+    override fun onDiscoverMoreScreenViewed() {
+        pocketStoriesController.handleDiscoverMoreScreenViewed()
     }
 
     override fun reportSessionMetrics(state: AppState) {

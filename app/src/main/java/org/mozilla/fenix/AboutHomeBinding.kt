@@ -5,6 +5,8 @@
 package org.mozilla.fenix
 
 import androidx.navigation.NavController
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -18,12 +20,13 @@ import org.mozilla.fenix.home.HomeFragment
 
 /**
  * A binding for observing [ContentState.url] and navigating to the [HomeFragment] if
- * the current session's url is updated to [ABOUT_HOME].
+ * the current session's url is updated to [ABOUT_HOME_URL].
  */
 class AboutHomeBinding(
     browserStore: BrowserStore,
     private val navController: NavController,
-) : AbstractBinding<BrowserState>(browserStore) {
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
+) : AbstractBinding<BrowserState>(browserStore, mainDispatcher) {
 
     override suspend fun onState(flow: Flow<BrowserState>) {
         flow

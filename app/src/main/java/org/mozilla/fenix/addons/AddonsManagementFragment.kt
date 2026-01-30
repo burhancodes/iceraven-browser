@@ -47,15 +47,16 @@ import mozilla.components.support.ktx.android.view.hideKeyboard
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.databinding.FragmentAddOnsManagementBinding
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.settings.SupportUtils.AMO_HOMEPAGE_FOR_ANDROID
 import org.mozilla.fenix.theme.ThemeManager
 import java.util.Locale
+import mozilla.components.feature.addons.R as addonsR
 
 /**
  * Fragment use for managing add-ons.
@@ -83,11 +84,6 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
         binding = FragmentAddOnsManagementBinding.bind(view)
         bindRecyclerView()
         setupMenu()
-        (activity as HomeActivity).webExtensionPromptFeature.onAddonChanged = {
-            runIfFragmentIsAttached {
-                adapter?.updateAddon(it)
-            }
-        }
         addonImportFilePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if(result.resultCode == Activity.RESULT_OK) {
@@ -241,9 +237,9 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
         // letting go of the resources to avoid memory leak.
         adapter = null
         binding = null
-        (activity as HomeActivity).webExtensionPromptFeature.onAddonChanged = {}
     }
 
+    @Suppress("CognitiveComplexMethod")
     private fun bindRecyclerView() {
         logger.info("Binding recycler view for AddonsManagementFragment")
 
@@ -252,12 +248,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
             onInstallButtonClicked = ::installAddon,
             onMoreAddonsButtonClicked = ::openAMO,
             onLearnMoreClicked = { link, addon ->
-                openLearnMoreLink(
-                    activity as HomeActivity,
-                    link,
-                    addon,
-                    BrowserDirection.FromAddonsManagementFragment,
-                )
+                binding?.root?.openLearnMoreLink(link, addon)
             },
         )
 
@@ -323,7 +314,7 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
                         binding?.let {
                             showSnackBar(
                                 it.root,
-                                getString(R.string.mozac_feature_addons_failed_to_query_extensions),
+                                getString(addonsR.string.mozac_feature_addons_failed_to_query_extensions),
                             )
                         }
                         binding?.addOnsProgressBar?.isVisible = false
@@ -392,10 +383,10 @@ class AddonsManagementFragment : Fragment(R.layout.fragment_add_ons_management) 
     }
 
     private fun openAMO() {
-        openLinkInNewTab(
-            activity as HomeActivity,
-            AMO_HOMEPAGE_FOR_ANDROID,
-            BrowserDirection.FromAddonsManagementFragment,
+        findNavController().openToBrowser()
+        requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
+            searchTermOrURL = AMO_HOMEPAGE_FOR_ANDROID,
+            newTab = true,
         )
     }
 }

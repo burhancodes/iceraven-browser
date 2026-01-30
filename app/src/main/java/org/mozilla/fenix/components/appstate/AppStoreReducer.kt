@@ -31,7 +31,7 @@ import org.mozilla.fenix.share.ShareActionReducer
  * Reducer for [AppStore].
  */
 internal object AppStoreReducer {
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CognitiveComplexMethod")
     fun reduce(state: AppState, action: AppAction): AppState = when (action) {
         is AppAction.UpdateInactiveExpanded ->
             state.copy(inactiveTabsExpanded = action.expanded)
@@ -173,13 +173,13 @@ internal object AppStoreReducer {
             snackbarState = SnackbarState.BookmarkDeleted(title = action.title),
         )
 
+        is AppAction.BookmarkAction.BookmarkOperationResultReported -> state.copy(
+            snackbarState = SnackbarState.BookmarkOperationResultReported(action.globalResultReport),
+        )
+
         is AppAction.DeleteAndQuitStarted -> {
             state.copy(snackbarState = SnackbarState.DeletingBrowserDataInProgress)
         }
-
-        is AppAction.SiteDataCleared -> state.copy(
-            snackbarState = SnackbarState.SiteDataCleared,
-        )
 
         is AppAction.CurrentTabClosed -> state.copy(
             snackbarState = SnackbarState.CurrentTabClosed(action.isPrivate),
@@ -250,6 +250,7 @@ internal object AppStoreReducer {
             snackbarState = SnackbarState.DownloadCompleted(
                 action.downloadState,
             ),
+            supportedMenuNotifications = state.supportedMenuNotifications + SupportedMenuNotifications.Downloads,
         )
 
         is AppAction.DownloadAction.CannotOpenFile -> state.copy(
@@ -265,6 +266,14 @@ internal object AppStoreReducer {
         is AppAction.ReviewPromptAction -> ReviewPromptReducer.reduce(state, action)
 
         is AppAction.SearchAction -> SearchStateReducer.reduce(state, action)
+
+        is AppAction.MenuNotification.AddMenuNotification -> state.copy(
+            supportedMenuNotifications = state.supportedMenuNotifications + action.notification,
+        )
+
+        is AppAction.MenuNotification.RemoveMenuNotification -> state.copy(
+            supportedMenuNotifications = state.supportedMenuNotifications - action.notification,
+        )
     }
 }
 

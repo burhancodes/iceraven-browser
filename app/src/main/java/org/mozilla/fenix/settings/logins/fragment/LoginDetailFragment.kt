@@ -27,7 +27,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import mozilla.components.lib.state.ext.consumeFrom
+import mozilla.components.lib.state.helpers.StoreProvider.Companion.navBackStackStore
 import mozilla.components.ui.widgets.withCenterAlignedButtons
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.BrowserDirection
@@ -37,7 +39,6 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.SecureFragment
 import org.mozilla.fenix.biometricauthentication.AuthenticationStatus
 import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
-import org.mozilla.fenix.components.StoreProvider
 import org.mozilla.fenix.compose.snackbar.Snackbar
 import org.mozilla.fenix.compose.snackbar.SnackbarState
 import org.mozilla.fenix.databinding.FragmentLoginDetailBinding
@@ -64,7 +65,6 @@ class LoginDetailFragment : SecureFragment(R.layout.fragment_login_detail), Menu
 
     private val args by navArgs<LoginDetailFragmentArgs>()
     private var login: SavedLogin? = null
-    private lateinit var savedLoginsStore: LoginsFragmentStore
     private lateinit var loginDetailsBindingDelegate: LoginDetailsBindingDelegate
     private lateinit var interactor: LoginDetailInteractor
     private var menu: Menu? = null
@@ -90,12 +90,6 @@ class LoginDetailFragment : SecureFragment(R.layout.fragment_login_detail), Menu
             setSecureContentVisibility(true)
         }
 
-        savedLoginsStore =
-            StoreProvider.get(findNavController().getBackStackEntry(R.id.savedLogins)) {
-                LoginsFragmentStore(
-                    createInitialLoginsListState(requireContext().settings()),
-                )
-            }
         loginDetailsBindingDelegate = LoginDetailsBindingDelegate(binding)
 
         return view
@@ -104,6 +98,11 @@ class LoginDetailFragment : SecureFragment(R.layout.fragment_login_detail), Menu
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        val savedLoginsStore by findNavController().getBackStackEntry(R.id.savedLogins)
+            .navBackStackStore(createInitialLoginsListState(requireContext().settings())) {
+                LoginsFragmentStore(it)
+            }
 
         interactor = LoginDetailInteractor(
             SavedLoginsStorageController(
@@ -277,7 +276,7 @@ class LoginDetailFragment : SecureFragment(R.layout.fragment_login_detail), Menu
 
     private fun displayDeleteLoginDialog() {
         activity?.let { activity ->
-            deleteDialog = AlertDialog.Builder(activity).apply {
+            deleteDialog = MaterialAlertDialogBuilder(activity).apply {
                 setMessage(R.string.login_deletion_confirmation_2)
                 setNegativeButton(R.string.dialog_delete_negative) { dialog: DialogInterface, _ ->
                     dialog.cancel()

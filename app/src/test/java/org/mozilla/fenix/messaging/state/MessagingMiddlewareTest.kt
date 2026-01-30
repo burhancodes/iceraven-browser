@@ -9,13 +9,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import mozilla.components.service.nimbus.messaging.Message
 import mozilla.components.service.nimbus.messaging.MessageData
 import mozilla.components.service.nimbus.messaging.NimbusMessagingController
 import mozilla.components.service.nimbus.messaging.StyleData
-import mozilla.components.support.test.ext.joinBlocking
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
 import org.junit.Assert.assertEquals
@@ -50,6 +49,7 @@ class MessagingMiddlewareTest {
         settings = mockk(relaxed = true)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class) // advanceUntilIdle
     @Test
     fun `WHEN restored THEN get messages from the storage`() = runTestOnMain {
         val store = AppStore(
@@ -66,8 +66,7 @@ class MessagingMiddlewareTest {
 
         coEvery { controller.getMessages() } returns listOf(message)
 
-        store.dispatch(Restore).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Restore)
         coroutineScope.advanceUntilIdle()
 
         assertEquals(listOf(message), store.state.messaging.messages)
@@ -98,8 +97,7 @@ class MessagingMiddlewareTest {
 
         assertEquals(0, store.state.messaging.messageToShow.size)
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         // UpdateMessageToShow to causes messageToShow to append
         assertEquals(1, store.state.messaging.messageToShow.size)
@@ -121,8 +119,7 @@ class MessagingMiddlewareTest {
 
         assertEquals(message, store.state.messaging.messages.first())
 
-        store.dispatch(MessageClicked(message)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(MessageClicked(message))
 
         assertTrue(store.state.messaging.messages.isEmpty())
         coVerify { controller.onMessageClicked(message = message) }
@@ -146,8 +143,7 @@ class MessagingMiddlewareTest {
 
             assertEquals(message, store.state.messaging.messages.first())
 
-            store.dispatch(MicrosurveyAction.Started(message.id)).joinBlocking()
-            store.waitUntilIdle()
+            store.dispatch(MicrosurveyAction.Started(message.id))
 
             assertFalse(store.state.messaging.messages.isEmpty())
             coVerify { controller.onMicrosurveyStarted(id = message.id) }
@@ -167,8 +163,7 @@ class MessagingMiddlewareTest {
                 MessagingMiddleware(controller, settings, coroutineScope),
             ),
         )
-        store.dispatch(MessageDismissed(message)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(MessageDismissed(message))
 
         assertTrue(store.state.messaging.messages.isEmpty())
         coVerify { controller.onMessageDismissed(message = message) }
@@ -188,8 +183,7 @@ class MessagingMiddlewareTest {
                 MessagingMiddleware(controller, settings, coroutineScope),
             ),
         )
-        store.dispatch(Dismissed(message.id)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Dismissed(message.id))
 
         assertTrue(store.state.messaging.messages.isEmpty())
         coVerify { controller.onMicrosurveyDismissed(message = message) }
@@ -214,8 +208,6 @@ class MessagingMiddlewareTest {
             assertEquals(message, store.state.messaging.messages.first())
 
             store.dispatch(AppAction.MessagingAction.MicrosurveyAction.Shown(message.id))
-                .joinBlocking()
-            store.waitUntilIdle()
 
             assertFalse(store.state.messaging.messages.isEmpty())
             coVerify { controller.onMicrosurveyShown(id = message.id) }
@@ -240,8 +232,6 @@ class MessagingMiddlewareTest {
             assertEquals(message, store.state.messaging.messages.first())
 
             store.dispatch(AppAction.MessagingAction.MicrosurveyAction.SentConfirmationShown(message.id))
-                .joinBlocking()
-            store.waitUntilIdle()
 
             assertFalse(store.state.messaging.messages.isEmpty())
             coVerify { controller.onMicrosurveySentConfirmationShown(id = message.id) }
@@ -266,8 +256,6 @@ class MessagingMiddlewareTest {
             assertEquals(message, store.state.messaging.messages.first())
 
             store.dispatch(AppAction.MessagingAction.MicrosurveyAction.OnPrivacyNoticeTapped(message.id))
-                .joinBlocking()
-            store.waitUntilIdle()
 
             assertFalse(store.state.messaging.messages.isEmpty())
             coVerify { controller.onMicrosurveyPrivacyNoticeTapped(id = message.id) }
@@ -290,8 +278,7 @@ class MessagingMiddlewareTest {
             ),
         )
 
-        store.dispatch(MessageDismissed(message)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(MessageDismissed(message))
 
         // removeMessages causes messages size to be 0
         assertEquals(0, store.state.messaging.messages.size)
@@ -316,8 +303,7 @@ class MessagingMiddlewareTest {
             ),
         )
 
-        store.dispatch(Dismissed(message.id)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Dismissed(message.id))
 
         // removeMessages causes messages size to be 0
         assertEquals(0, store.state.messaging.messages.size)
@@ -342,8 +328,7 @@ class MessagingMiddlewareTest {
             ),
         )
 
-        store.dispatch(MessageClicked(message)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(MessageClicked(message))
 
         assertTrue(store.state.messaging.messages.isEmpty())
         assertTrue(store.state.messaging.messageToShow.isEmpty())
@@ -377,8 +362,7 @@ class MessagingMiddlewareTest {
             controller.onMessageDisplayed(eq(message), any())
         } returns messageDisplayed
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         assertEquals(1, store.state.messaging.messages.count())
         assertEquals(1, store.state.messaging.messages.first().displayCount)
@@ -418,8 +402,7 @@ class MessagingMiddlewareTest {
             controller.onMessageDisplayed(eq(message1), any())
         } returns messageDisplayed1
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         assertEquals(messageDisplayed1, store.state.messaging.messages[0])
         assertEquals(message2, store.state.messaging.messages[1])
@@ -457,8 +440,7 @@ class MessagingMiddlewareTest {
             controller.onMessageDisplayed(eq(message), any())
         } returns messageDisplayed
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         assertEquals(messageDisplayed.displayCount, store.state.messaging.messages[0].displayCount)
         assertEquals(1, store.state.messaging.messages.size)
@@ -500,8 +482,7 @@ class MessagingMiddlewareTest {
             controller.onMessageDisplayed(eq(message), any())
         } returns messageDisplayed
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         assertEquals(0, store.state.messaging.messages.size)
         assertEquals(1, store.state.messaging.messageToShow.size)
@@ -533,8 +514,7 @@ class MessagingMiddlewareTest {
         )
         coEvery { controller.onMessageDisplayed(eq(message), any()) } returns messageDisplayed
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.MICROSURVEY)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.MICROSURVEY))
 
         verify { settings.shouldShowMicrosurveyPrompt = false }
         assertEquals(0, store.state.messaging.messages.size)
@@ -569,8 +549,7 @@ class MessagingMiddlewareTest {
             controller.onMessageDisplayed(eq(message), any())
         } returns message2
 
-        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN)).joinBlocking()
-        store.waitUntilIdle()
+        store.dispatch(Evaluate(FenixMessageSurfaceId.HOMESCREEN))
 
         assertEquals(1, store.state.messaging.messages.count())
         assertEquals(message, store.state.messaging.messages.first())

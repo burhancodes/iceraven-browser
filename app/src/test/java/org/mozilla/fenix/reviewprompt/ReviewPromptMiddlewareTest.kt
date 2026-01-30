@@ -4,33 +4,34 @@
 
 package org.mozilla.fenix.reviewprompt
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import mozilla.components.support.test.ext.joinBlocking
-import mozilla.components.support.test.robolectric.testContext
+import mozilla.components.support.test.assertUnused
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mozilla.experiments.nimbus.NimbusMessagingHelperInterface
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.ReviewPromptAction
 import org.mozilla.fenix.components.appstate.AppState
+import org.mozilla.fenix.nimbus.FakeNimbusEventStore
 import org.mozilla.fenix.reviewprompt.ReviewPromptState.Eligible.Type
-import org.mozilla.fenix.utils.Settings
 
-@RunWith(AndroidJUnit4::class)
 class ReviewPromptMiddlewareTest {
 
-    private val settings = Settings(testContext)
+    private val eventStore = FakeNimbusEventStore()
 
+    private var isFeatureFlagEnabled = true
+    private var isTelemetryEnabled = true
     private lateinit var mainCriteria: Sequence<Boolean>
     private lateinit var subCriteria: Sequence<Boolean>
+    private lateinit var legacyCriteria: Sequence<Boolean>
 
     private val store = AppStore(
         middlewares = listOf(
             ReviewPromptMiddleware(
-                settings = settings,
+                isReviewPromptFeatureEnabled = { isFeatureFlagEnabled },
+                isTelemetryEnabled = { isTelemetryEnabled },
                 createJexlHelper = {
                     object : NimbusMessagingHelperInterface {
                         override fun evalJexl(expression: String) = assertUnused()
@@ -38,19 +39,74 @@ class ReviewPromptMiddlewareTest {
                         override fun stringFormat(template: String, uuid: String?) = assertUnused()
                     }
                 },
-                timeNowInMillis = { TEST_TIME_NOW },
                 buildTriggerMainCriteria = { mainCriteria },
                 buildTriggerSubCriteria = { subCriteria },
+                buildTriggerLegacyCriteria = { legacyCriteria },
+                nimbusEventStore = eventStore,
             ),
         ),
     )
+
+    @Test
+    fun `GIVEN feature flag is enabled WHEN check requested THEN main and sub-criteria are checked`() {
+        isFeatureFlagEnabled = true
+
+        var mainCriteriaChecked = false
+        var subCriteriaChecked = false
+        var legacyCriteriaChecked = false
+        mainCriteria = sequence {
+            mainCriteriaChecked = true
+            yield(true)
+        }
+        subCriteria = sequence {
+            subCriteriaChecked = true
+            yield(true)
+        }
+        legacyCriteria = sequence {
+            legacyCriteriaChecked = true
+            yield(true)
+        }
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertTrue(mainCriteriaChecked)
+        assertTrue(subCriteriaChecked)
+        assertFalse(legacyCriteriaChecked)
+    }
+
+    @Test
+    fun `GIVEN feature flag is disabled WHEN check requested THEN legacy criteria are checked`() {
+        isFeatureFlagEnabled = false
+
+        var mainCriteriaChecked = false
+        var subCriteriaChecked = false
+        var legacyCriteriaChecked = false
+        mainCriteria = sequence {
+            mainCriteriaChecked = true
+            yield(true)
+        }
+        subCriteria = sequence {
+            subCriteriaChecked = true
+            yield(true)
+        }
+        legacyCriteria = sequence {
+            legacyCriteriaChecked = true
+            yield(true)
+        }
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertFalse(mainCriteriaChecked)
+        assertFalse(subCriteriaChecked)
+        assertTrue(legacyCriteriaChecked)
+    }
 
     @Test
     fun `GIVEN main criteria satisfied AND one of sub-criteria satisfied WHEN check requested THEN sets eligible`() {
         mainCriteria = sequenceOf(true)
         subCriteria = sequenceOf(false, true, false)
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertTrue(store.state.reviewPrompt is ReviewPromptState.Eligible)
     }
@@ -65,7 +121,7 @@ class ReviewPromptMiddlewareTest {
             yield(true)
         }
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertFalse(continuedPastFirstSatisfied)
     }
@@ -75,7 +131,7 @@ class ReviewPromptMiddlewareTest {
         mainCriteria = emptySequence()
         subCriteria = sequenceOf(false, true, false)
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertTrue(store.state.reviewPrompt is ReviewPromptState.Eligible)
     }
@@ -85,7 +141,7 @@ class ReviewPromptMiddlewareTest {
         mainCriteria = sequenceOf(true)
         subCriteria = sequenceOf(false)
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertEquals(
             AppState(reviewPrompt = ReviewPromptState.NotEligible),
@@ -98,7 +154,7 @@ class ReviewPromptMiddlewareTest {
         mainCriteria = sequenceOf(true)
         subCriteria = emptySequence()
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertEquals(
             AppState(reviewPrompt = ReviewPromptState.NotEligible),
@@ -111,7 +167,7 @@ class ReviewPromptMiddlewareTest {
         mainCriteria = sequenceOf(true, false, true)
         subCriteria = sequenceOf(true)
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertEquals(
             AppState(reviewPrompt = ReviewPromptState.NotEligible),
@@ -132,36 +188,38 @@ class ReviewPromptMiddlewareTest {
             yield(false)
         }
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertFalse(continuedPastFirstNotSatisfied)
     }
 
     @Test
     fun `GIVEN check ran WHEN check requested again THEN does nothing`() {
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        mainCriteria = sequenceOf()
+        subCriteria = sequenceOf()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
         val expectedState = store.state
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertEquals(expectedState, store.state)
     }
 
     @Test
     fun `GIVEN review prompt shown WHEN check requested THEN does nothing`() {
-        store.dispatch(ReviewPromptAction.ReviewPromptShown).joinBlocking()
+        store.dispatch(ReviewPromptAction.ReviewPromptShown)
         val expectedState = store.state
 
-        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
 
         assertEquals(expectedState, store.state)
     }
 
     @Test
-    fun `WHEN review prompt shown THEN last review prompt time updated`() {
-        store.dispatch(ReviewPromptAction.ReviewPromptShown).joinBlocking()
+    fun `WHEN review prompt shown THEN an event is recorded`() {
+        store.dispatch(ReviewPromptAction.ReviewPromptShown)
 
-        assertEquals(TEST_TIME_NOW, settings.lastReviewPromptTimeInMillis)
+        eventStore.assertSingleEventEquals("review_prompt_shown")
     }
 
     @Test
@@ -179,11 +237,70 @@ class ReviewPromptMiddlewareTest {
         assertNoOp(ReviewPromptAction.ShowPlayStorePrompt)
     }
 
+    @Ignore("https://bugzilla.mozilla.org/show_bug.cgi?id=2001801")
     @Test
     fun `GIVEN telemetry enabled AND criteria satisfied WHEN check requested THEN sets eligible for Custom prompt`() {
-        settings.isTelemetryEnabled = true
+        isTelemetryEnabled = true
         mainCriteria = sequenceOf(true)
         subCriteria = sequenceOf(true)
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertEquals(
+            AppState(reviewPrompt = ReviewPromptState.Eligible(Type.Custom)),
+            store.state,
+        )
+    }
+
+    @Test
+    fun `GIVEN telemetry disabled AND criteria satisfied WHEN check requested THEN sets eligible for Play Store prompt`() {
+        isTelemetryEnabled = false
+        mainCriteria = sequenceOf(true)
+        subCriteria = sequenceOf(true)
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertEquals(
+            AppState(reviewPrompt = ReviewPromptState.Eligible(Type.PlayStore)),
+            store.state,
+        )
+    }
+
+    @Ignore("https://bugzilla.mozilla.org/show_bug.cgi?id=2001801")
+    @Test
+    fun `GIVEN feature flag disabled AND telemetry enabled AND criteria satisfied WHEN check requested THEN sets eligible for Custom prompt`() {
+        isFeatureFlagEnabled = false
+        isTelemetryEnabled = true
+        legacyCriteria = sequenceOf(true)
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertEquals(
+            AppState(reviewPrompt = ReviewPromptState.Eligible(Type.Custom)),
+            store.state,
+        )
+    }
+
+    @Test
+    fun `GIVEN feature flag disabled AND telemetry disabled AND criteria satisfied WHEN check requested THEN sets eligible for Play Store prompt`() {
+        isFeatureFlagEnabled = false
+        isTelemetryEnabled = false
+        legacyCriteria = sequenceOf(true)
+
+        store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt)
+
+        assertEquals(
+            AppState(reviewPrompt = ReviewPromptState.Eligible(Type.PlayStore)),
+            store.state,
+        )
+    }
+
+    @Ignore("https://bugzilla.mozilla.org/show_bug.cgi?id=2001801")
+    @Test
+    fun `GIVEN feature flag disabled AND telemetry enabled AND criteria satisfied WHEN check requested THEN sets eligible for Custom prompt`() {
+        isFeatureFlagEnabled = false
+        isTelemetryEnabled = true
+        legacyCriteria = sequenceOf(true)
 
         store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
 
@@ -194,10 +311,10 @@ class ReviewPromptMiddlewareTest {
     }
 
     @Test
-    fun `GIVEN telemetry disabled AND criteria satisfied WHEN check requested THEN sets eligible for Play Store prompt`() {
-        settings.isTelemetryEnabled = false
-        mainCriteria = sequenceOf(true)
-        subCriteria = sequenceOf(true)
+    fun `GIVEN feature flag disabled AND telemetry disabled AND criteria satisfied WHEN check requested THEN sets eligible for Play Store prompt`() {
+        isFeatureFlagEnabled = false
+        isTelemetryEnabled = false
+        legacyCriteria = sequenceOf(true)
 
         store.dispatch(ReviewPromptAction.CheckIfEligibleForReviewPrompt).joinBlocking()
 
@@ -209,76 +326,87 @@ class ReviewPromptMiddlewareTest {
 
     @Test
     fun `WHEN evalJexl returns false THEN createdAtLeastOneBookmark returns false`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(false)
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = false)
 
         val result = createdAtLeastOneBookmark(jexlHelper)
-
-        assertEquals(jexlHelper.evalJexlValue, result)
-    }
-
-    @Test
-    fun `WHEN evalJexl returns true THEN createdAtLeastOneBookmark returns true`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(true)
-
-        val result = createdAtLeastOneBookmark(jexlHelper)
-
-        assertEquals(jexlHelper.evalJexlValue, result)
-    }
-
-    @Test
-    fun `WHEN evalJexl returns false THEN isDefaultBrowserTrigger returns false`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(false)
-
-        val result = isDefaultBrowserTrigger(jexlHelper)
 
         assertFalse(result)
     }
 
     @Test
-    fun `WHEN evalJexl returns true THEN isDefaultBrowserTrigger returns true`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(true)
+    fun `WHEN evalJexl returns true THEN createdAtLeastOneBookmark returns true`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = true)
 
-        val result = isDefaultBrowserTrigger(jexlHelper)
+        val result = createdAtLeastOneBookmark(jexlHelper)
 
         assertTrue(result)
     }
 
     @Test
-    fun `WHEN evalJexl returns false THEN usedAppOnAtLeastFourOfLastSevenDaysTrigger returns false`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(false)
+    fun `WHEN evalJexl returns false THEN isDefaultBrowser returns false`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = false)
 
-        val result = usedAppOnAtLeastFourOfLastSevenDaysTrigger(jexlHelper)
+        val result = isDefaultBrowser(jexlHelper)
 
         assertFalse(result)
     }
 
     @Test
-    fun `WHEN evalJexl returns true THEN usedAppOnAtLeastFourOfLastSevenDaysTrigger returns true`() {
-        val jexlHelper = FakeNimbusMessagingHelperInterface(true)
+    fun `WHEN evalJexl returns true THEN isDefaultBrowser returns true`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = true)
 
-        val result = usedAppOnAtLeastFourOfLastSevenDaysTrigger(jexlHelper)
+        val result = isDefaultBrowser(jexlHelper)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `WHEN evalJexl returns false THEN usedAppOnAtLeastFourOfLastSevenDays returns false`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = false)
+
+        val result = usedAppOnAtLeastFourOfLastSevenDays(jexlHelper)
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `WHEN evalJexl returns true THEN usedAppOnAtLeastFourOfLastSevenDays returns true`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = true)
+
+        val result = usedAppOnAtLeastFourOfLastSevenDays(jexlHelper)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `WHEN evalJexl returns false THEN hasNotBeenPromptedLastFourMonths returns false`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = false)
+
+        val result = hasNotBeenPromptedLastFourMonths(jexlHelper)
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `WHEN evalJexl returns true THEN hasNotBeenPromptedLastFourMonths returns true`() {
+        val jexlHelper = FakeNimbusMessagingHelperInterface(evalJexlValue = true)
+
+        val result = hasNotBeenPromptedLastFourMonths(jexlHelper)
 
         assertTrue(result)
     }
 
     private fun assertNoOp(action: ReviewPromptAction) {
         val withoutMiddleware = AppStore()
-        withoutMiddleware.dispatch(action).joinBlocking()
+        withoutMiddleware.dispatch(action)
         val expectedState = withoutMiddleware.state
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
 
         assertEquals(
             expectedState,
             store.state,
         )
-    }
-
-    private fun assertUnused(): Nothing =
-        throw AssertionError("Expected unused function, but was called here ")
-
-    private companion object {
-        const val TEST_TIME_NOW = 1598416882805L
     }
 
     private class FakeNimbusMessagingHelperInterface(val evalJexlValue: Boolean) :

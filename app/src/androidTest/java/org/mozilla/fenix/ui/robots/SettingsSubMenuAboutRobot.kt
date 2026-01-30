@@ -24,7 +24,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
-import mozilla.components.support.utils.ext.getPackageInfoCompat
+import mozilla.components.support.utils.ext.packageManagerCompatHelper
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.containsString
 import org.mozilla.fenix.R
@@ -45,13 +45,13 @@ class SettingsSubMenuAboutRobot {
         verifyVersionNumber()
         verifyProductCompany()
         verifyCurrentTimestamp()
-        verifyTheLinksList()
     }
 
     fun verifyVersionNumber() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-        val packageInfo = context.packageManager.getPackageInfoCompat(context.packageName, 0)
+        val packageInfo =
+            context.packageManagerCompatHelper.getPackageInfoCompat(context.packageName, 0)
         val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo).toString()
         val buildNVersion = "${packageInfo.versionName} (Build #$versionCode)\n"
         val geckoVersion =
@@ -111,6 +111,10 @@ class SettingsSubMenuAboutRobot {
         Log.i(TAG, "verifyWhatIsNewInFirefoxLink: Trying to click the \"What’s new in $firefox\" link")
         onView(withText("What’s new in $firefox")).perform(click())
         Log.i(TAG, "verifyWhatIsNewInFirefoxLink: Clicked the \"What’s new in $firefox\" link")
+
+        browserScreen {
+            verifyWhatsNewURL()
+        }
     }
     fun verifySupportLink() {
         Log.i(TAG, "verifySupport: Trying to perform ${LISTS_MAXSWIPES}x a scroll action to the end of the about list")
@@ -129,10 +133,6 @@ class SettingsSubMenuAboutRobot {
     }
 
     fun verifyCrashesLink() {
-        navigationToolbar {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openAboutFirefoxPreview {}
         Log.i(TAG, "verifyCrashesLink: Trying to perform ${LISTS_MAXSWIPES}x a scroll action to the end of the about list")
         aboutMenuList.scrollToEnd(LISTS_MAXSWIPES)
         Log.i(TAG, "verifyCrashesLink: Performed ${LISTS_MAXSWIPES}x a scroll action to the end of the about list")
@@ -229,22 +229,6 @@ class SettingsSubMenuAboutRobot {
             .check(matches(isDisplayed()))
             .check(matches(hasMinimumChildCount(10)))
         Log.i(TAG, "verifyTheLibrariesListNotEmpty: Verify that the OSS Libraries list has more then 10 items.")
-    }
-
-    fun verifyTheLinksList() {
-        verifyAboutToolbar()
-        verifyWhatIsNewInFirefoxLink()
-        navigateBackToAboutPage()
-        verifySupportLink()
-        verifyCrashesLink()
-        navigateBackToAboutPage()
-        verifyPrivacyNoticeLink()
-        navigateBackToAboutPage()
-        verifyKnowYourRightsLink()
-        navigateBackToAboutPage()
-        verifyLicensingInformationLink()
-        navigateBackToAboutPage()
-        verifyLibrariesUsedLink()
     }
 
     class Transition {

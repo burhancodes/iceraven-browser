@@ -10,7 +10,7 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.customannotations.SmokeTest
 import org.mozilla.fenix.helpers.DataGenerationHelper.getStringResource
 import org.mozilla.fenix.helpers.HomeActivityIntentTestRule
-import org.mozilla.fenix.helpers.TestAssetHelper
+import org.mozilla.fenix.helpers.TestAssetHelper.getGenericAsset
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestSetup
 import org.mozilla.fenix.helpers.perf.DetectMemoryLeaksRule
@@ -34,7 +34,7 @@ class MicrosurveyTest : TestSetup() {
     @SmokeTest
     @Test
     fun activationOfThePrintMicrosurveyTest() {
-        val testPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val testPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.url) {
@@ -45,10 +45,7 @@ class MicrosurveyTest : TestSetup() {
             mDevice.pressBack()
         }
         surveyScreen {
-            verifyTheFirefoxLogo(composeTestRule)
-            verifyTheSurveyTitle(getStringResource(R.string.microsurvey_prompt_printing_title), composeTestRule)
-            verifyContinueSurveyButton(composeTestRule)
-            verifyHomeScreenSurveyCloseButton()
+            verifyThePrintSurveyPrompt(composeTestRule = composeTestRule, exists = true)
         }
     }
 
@@ -56,8 +53,8 @@ class MicrosurveyTest : TestSetup() {
     @SmokeTest
     @Test
     fun verifyTheSurveyRemainsActivatedWhileChangingTabsTest() {
-        val testPage1 = TestAssetHelper.getGenericAsset(mockWebServer, 1)
-        val testPage2 = TestAssetHelper.getGenericAsset(mockWebServer, 2)
+        val testPage1 = mockWebServer.getGenericAsset(1)
+        val testPage2 = mockWebServer.getGenericAsset(2)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage1.url) {
@@ -76,7 +73,7 @@ class MicrosurveyTest : TestSetup() {
         }.enterURLAndEnterToBrowser(testPage2.url) {
             mDevice.waitForIdle()
             surveyScreen {
-                verifyTheSurveyTitle(getStringResource(R.string.microsurvey_prompt_printing_title), composeTestRule)
+                verifyTheSurveyTitle(getStringResource(R.string.microsurvey_prompt_printing_title), composeTestRule, true)
             }
         }
     }
@@ -85,7 +82,7 @@ class MicrosurveyTest : TestSetup() {
     @SmokeTest
     @Test
     fun verifyTheSurveyConfirmationSheetTest() {
-        val testPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val testPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.url) {
@@ -101,6 +98,30 @@ class MicrosurveyTest : TestSetup() {
             selectAnswer("Very satisfied", composeTestRule)
             clickSubmitButton(composeTestRule)
             verifySurveyCompletedScreen(composeTestRule)
+        }
+    }
+
+    // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2809344
+    @Test
+    fun dismissTheSurveyPromptTest() {
+        val testPage = mockWebServer.getGenericAsset(1)
+
+        navigationToolbar {
+        }.enterURLAndEnterToBrowser(testPage.url) {
+        }.openThreeDotMenu {
+        }.clickShareButton {
+        }.clickPrintButton {
+            mDevice.waitForIdle()
+            mDevice.pressBack()
+        }
+        surveyScreen {
+            verifyThePrintSurveyPrompt(composeTestRule = composeTestRule, exists = true)
+            clickOutsideTheSurveyPrompt()
+            verifyThePrintSurveyPrompt(composeTestRule = composeTestRule, exists = true)
+        }.clickHomeScreenSurveyCloseButton {
+        }
+        surveyScreen {
+            verifyThePrintSurveyPrompt(composeTestRule = composeTestRule, exists = false)
         }
     }
 }

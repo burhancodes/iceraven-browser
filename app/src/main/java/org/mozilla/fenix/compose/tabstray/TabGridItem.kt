@@ -5,7 +5,6 @@
 package org.mozilla.fenix.compose.tabstray
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.text.BidiFormatter
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.state.createTab
-import mozilla.components.compose.base.Divider
 import mozilla.components.support.base.utils.MAX_URI_LENGTH
 import mozilla.components.ui.colors.PhotonColors
 import org.mozilla.fenix.R
@@ -67,6 +66,7 @@ import org.mozilla.fenix.compose.TabThumbnail
 import org.mozilla.fenix.tabstray.TabsTrayTestTag
 import org.mozilla.fenix.tabstray.ext.toDisplayTitle
 import org.mozilla.fenix.theme.FirefoxTheme
+import mozilla.components.ui.icons.R as iconsR
 
 /**
  * Tab grid item used to display a tab that supports clicks,
@@ -122,8 +122,7 @@ fun TabGridItem(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CognitiveComplexMethod")
 @Composable
 private fun TabContent(
     tab: TabSessionState,
@@ -214,7 +213,7 @@ private fun TabContent(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.mozac_ic_globe_24),
+                                painter = painterResource(id = iconsR.drawable.mozac_ic_globe_24),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = FirefoxTheme.colors.iconPrimary,
@@ -255,7 +254,7 @@ private fun TabContent(
                             },
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.mozac_ic_cross_20),
+                                painter = painterResource(id = iconsR.drawable.mozac_ic_cross_20),
                                 contentDescription = stringResource(
                                     id = R.string.close_tab_title,
                                     tab.toDisplayTitle(),
@@ -266,7 +265,7 @@ private fun TabContent(
                     }
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 Thumbnail(
                     tab = tab,
@@ -317,7 +316,7 @@ private fun Thumbnail(
     ) {
         TabThumbnail(
             tab = tab,
-            size = size,
+            thumbnailSizePx = size,
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -336,7 +335,7 @@ private fun Thumbnail(
                 colors = CardDefaults.cardColors(containerColor = FirefoxTheme.colors.layerAccent),
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.mozac_ic_checkmark_24),
+                    painter = painterResource(id = iconsR.drawable.mozac_ic_checkmark_24),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(all = 8.dp),

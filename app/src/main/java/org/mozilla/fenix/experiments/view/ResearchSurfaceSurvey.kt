@@ -19,13 +19,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,8 +36,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import mozilla.components.compose.base.button.PrimaryButton
-import mozilla.components.compose.base.button.SecondaryButton
+import mozilla.components.compose.base.button.FilledButton
+import mozilla.components.compose.base.button.OutlinedButton
 import org.mozilla.fenix.R
 import org.mozilla.fenix.theme.FirefoxTheme
 
@@ -63,7 +64,7 @@ private const val ANIMATION_DURATION_MS = 500
 private fun SlideInFromBottomAnimation(
     content: @Composable () -> Unit,
 ) {
-    var offsetY by remember { mutableStateOf(INITIAL_OFFSET) }
+    var offsetY by remember { mutableIntStateOf(INITIAL_OFFSET) }
     val offsetState by animateDpAsState(
         targetValue = offsetY.dp,
         animationSpec = tween(durationMillis = ANIMATION_DURATION_MS),
@@ -122,6 +123,9 @@ fun ResearchSurfaceSurvey(
                     Image(
                         painter = painterResource(R.drawable.ic_firefox),
                         contentDescription = null,
+                        modifier = Modifier
+                            .height(112.dp)
+                            .width(108.dp),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -135,13 +139,13 @@ fun ResearchSurfaceSurvey(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth(BUTTON_WIDTH),
                 ) {
-                    PrimaryButton(
+                    FilledButton(
                         text = onAcceptButtonText,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onAccept,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    SecondaryButton(
+                    OutlinedButton(
                         text = onDismissButtonText,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onDismiss,

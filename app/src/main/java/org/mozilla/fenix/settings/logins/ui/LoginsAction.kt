@@ -10,12 +10,7 @@ import mozilla.components.lib.state.Action
  * Actions relating to the Logins list screen and its various subscreens.
  */
 internal sealed interface LoginsAction : Action
-
-/**
- * The Store is initializing.
- */
-internal data object Init : LoginsAction
-internal data object ViewDisposed : LoginsAction
+internal data object LoginsListAppeared : LoginsAction
 internal data object LoginsListBackClicked : LoginsAction
 
 /**

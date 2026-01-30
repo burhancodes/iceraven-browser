@@ -6,13 +6,12 @@ package org.mozilla.fenix.browser.settings
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import mozilla.components.browser.state.action.DefaultDesktopModeAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -27,6 +26,7 @@ import org.mozilla.fenix.browser.desktopmode.DesktopModeMiddleware
 import org.mozilla.fenix.browser.desktopmode.DesktopModeRepository
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 
+@OptIn(ExperimentalCoroutinesApi::class) // advanceUntilIdle
 @RunWith(AndroidJUnit4::class)
 class DesktopModeMiddlewareTest {
 
@@ -49,7 +49,6 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
 
         launch {
             assertEquals(expected, store.state.desktopMode)
@@ -69,7 +68,6 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
 
         launch {
             assertEquals(expected, store.state.desktopMode)
@@ -93,10 +91,8 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
         advanceUntilIdle()
-        store.waitUntilIdle()
     }
 
     @Test
@@ -116,9 +112,8 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
 
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
     }
 
     @Test
@@ -139,10 +134,8 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
         advanceUntilIdle()
-        store.waitUntilIdle()
 
         launch {
             assertEquals(expected, store.state.desktopMode)
@@ -167,10 +160,8 @@ class DesktopModeMiddlewareTest {
         )
 
         advanceUntilIdle()
-        store.waitUntilIdle()
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
         advanceUntilIdle()
-        store.waitUntilIdle()
 
         launch {
             assertEquals(expected, store.state.desktopMode)
@@ -191,10 +182,8 @@ class DesktopModeMiddlewareTest {
         assertNull(DesktopMode.settingsAlwaysRequestDesktopSite.testGetValue())
 
         advanceUntilIdle()
-        store.waitUntilIdle()
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
         advanceUntilIdle()
-        store.waitUntilIdle()
 
         assertNotNull(DesktopMode.settingsAlwaysRequestDesktopSite.testGetValue())
         val snapshot = DesktopMode.settingsAlwaysRequestDesktopSite.testGetValue()!!

@@ -6,7 +6,6 @@ package org.mozilla.fenix.ui
 
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.core.net.toUri
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mozilla.fenix.customannotations.SmokeTest
@@ -17,7 +16,8 @@ import org.mozilla.fenix.helpers.Constants.PackageName.PRINT_SPOOLER
 import org.mozilla.fenix.helpers.DataGenerationHelper.generateRandomString
 import org.mozilla.fenix.helpers.HomeActivityIntentTestRule
 import org.mozilla.fenix.helpers.MatcherHelper
-import org.mozilla.fenix.helpers.TestAssetHelper
+import org.mozilla.fenix.helpers.TestAssetHelper.getGenericAsset
+import org.mozilla.fenix.helpers.TestAssetHelper.refreshAsset
 import org.mozilla.fenix.helpers.TestHelper.clickSnackbarButton
 import org.mozilla.fenix.helpers.TestHelper.closeApp
 import org.mozilla.fenix.helpers.TestHelper.exitMenu
@@ -54,7 +54,7 @@ class MainMenuTest : TestSetup() {
             )
         }
 
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -115,7 +115,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2284134
     @Test
     fun openNewTabTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -146,8 +146,8 @@ class MainMenuTest : TestSetup() {
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2284323
     @Test
-    fun openSyncAndSaveDataTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+    fun openSignInTest() {
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -161,7 +161,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/243840
     @Test
     fun findInPageTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 3)
+        val defaultWebPage = mockWebServer.getGenericAsset(3)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -197,7 +197,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2283303
     @Test
     fun switchDesktopSiteModeOnOffTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -214,7 +214,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/1314137
     @Test
     fun setDesktopSiteBeforePageLoadTest() {
-        val webPage = TestAssetHelper.getGenericAsset(mockWebServer, 4)
+        val webPage = mockWebServer.getGenericAsset(4)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(webPage.url) {
@@ -245,7 +245,7 @@ class MainMenuTest : TestSetup() {
     @SmokeTest
     @Test
     fun addPageShortcutToHomeScreenTest() {
-        val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val website = mockWebServer.getGenericAsset(1)
         val shortcutTitle = generateRandomString(5)
 
         homeScreen {
@@ -275,7 +275,7 @@ class MainMenuTest : TestSetup() {
     @SmokeTest
     @Test
     fun mainMenuShareButtonTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -288,8 +288,8 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/233604
     @Test
     fun navigateBackAndForwardTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
-        val nextWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 2)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
+        val nextWebPage = mockWebServer.getGenericAsset(2)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -311,7 +311,7 @@ class MainMenuTest : TestSetup() {
     @SmokeTest
     @Test
     fun refreshPageButtonTest() {
-        val refreshWebPage = TestAssetHelper.getRefreshAsset(mockWebServer)
+        val refreshWebPage = mockWebServer.refreshAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(refreshWebPage.url) {
@@ -326,7 +326,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2265657
     @Test
     fun forceRefreshPageTest() {
-        val refreshWebPage = TestAssetHelper.getRefreshAsset(mockWebServer)
+        val refreshWebPage = mockWebServer.refreshAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(refreshWebPage.url) {
@@ -341,7 +341,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2282411
     @Test
     fun printWebPageFromMainMenuTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -355,7 +355,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2282408
     @Test
     fun printWebPageFromShareMenuTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -370,7 +370,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937924
     @Test
     fun verifyTheWhatIsBrokenErrorMessageTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -389,7 +389,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937926
     @Test
     fun verifyThatTheBrokenSiteFormCanBeCanceledTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -408,7 +408,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937927
     @Test
     fun verifyTheBrokenSiteFormSubmissionTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -421,7 +421,7 @@ class MainMenuTest : TestSetup() {
             clickBrokenSiteFormSendButton(composeTestRule)
         }
         browserScreen {
-            verifySnackBarText("Your report was sent")
+            verifySnackBarText("Report sent")
         }.openThreeDotMenu {
         }.openReportBrokenSite {
             verifyWhatIsBrokenField(composeTestRule)
@@ -432,7 +432,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937930
     @Test
     fun verifyThatTheBrokenSiteFormInfoPersistsTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -452,8 +452,8 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937931
     @Test
     fun verifyTheBrokenSiteFormIsEmptyWithoutSubmittingThePreviousOneTest() {
-        val firstWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
-        val secondWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 2)
+        val firstWebPage = mockWebServer.getGenericAsset(1)
+        val secondWebPage = mockWebServer.getGenericAsset(2)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
@@ -477,7 +477,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937932
     @Test
     fun verifyThatTheBrokenSiteFormInfoIsErasedWhenKillingTheAppTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -502,7 +502,7 @@ class MainMenuTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2937933
     @Test
     fun verifyReportBrokenSiteFormNotDisplayedWhenTelemetryIsDisabledTest() {
-        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val defaultWebPage = mockWebServer.getGenericAsset(1)
 
         homeScreen {
         }.openThreeDotMenu {

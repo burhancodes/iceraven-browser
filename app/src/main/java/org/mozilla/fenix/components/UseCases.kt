@@ -94,7 +94,7 @@ class UseCases(
         WebAppUseCases(context, store.value, shortcutManager.value)
     }
 
-    val downloadUseCases by lazyMonitored { DownloadsUseCases(store.value) }
+    val downloadUseCases by lazyMonitored { DownloadsUseCases(store.value, context.applicationContext) }
 
     val contextMenuUseCases by lazyMonitored { ContextMenuUseCases(store.value) }
 
@@ -117,7 +117,7 @@ class UseCases(
 
     val wallpaperUseCases by lazyMonitored {
         // Required to even access context.filesDir property and to retrieve current locale
-        val (rootStorageDirectory, currentLocale) = strictMode.value.resetAfter(StrictMode.allowThreadDiskReads()) {
+        val (rootStorageDirectory, currentLocale) = strictMode.value.allowViolation(StrictMode::allowThreadDiskReads) {
             val rootStorageDirectory = context.filesDir
             val currentLocale = LocaleManager.getCurrentLocale(context)?.toLanguageTag()
                 ?: LocaleManager.getSystemDefault().toLanguageTag()
@@ -132,6 +132,7 @@ class UseCases(
 
     val fenixBrowserUseCases by lazyMonitored {
         FenixBrowserUseCases(
+            appStore = appStore.value,
             addNewTabUseCase = tabsUseCases.addTab,
             loadUrlUseCase = sessionUseCases.loadUrl,
             searchUseCases = searchUseCases,

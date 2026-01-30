@@ -111,6 +111,9 @@ enum class ThemeOptionType(val id: String) {
  * Model containing data for the terms of service page during onboarding.
  */
 data class OnboardingTermsOfService(
+    val subheaderOneText: String? = null,
+    val subheaderTwoText: String? = null,
+    val subheaderThreeText: String? = null,
     val lineOneText: String,
     val lineOneLinkText: String,
     val lineOneLinkUrl: String,
@@ -152,6 +155,8 @@ interface OnboardingTermsOfServiceEventHandler {
 
     /**
      * Invoked when the accept button is clicked.
+     *
+     * @param nowMillis The current time in milliseconds.
      */
-    fun onAcceptTermsButtonClicked() = Unit
+    fun onAcceptTermsButtonClicked(nowMillis: Long = System.currentTimeMillis()) = Unit
 }

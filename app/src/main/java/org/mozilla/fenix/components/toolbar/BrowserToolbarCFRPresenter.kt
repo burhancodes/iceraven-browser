@@ -35,12 +35,13 @@ import mozilla.components.concept.engine.EngineSession.CookieBannerHandlingStatu
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 import mozilla.telemetry.glean.private.NoExtras
-import org.mozilla.fenix.GleanMetrics.AddressToolbar
 import org.mozilla.fenix.GleanMetrics.CookieBanners
+import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.utils.Settings
+import mozilla.components.browser.toolbar.R as toolbarR
 
 /**
  * Vertical padding needed to improve the visual alignment of the popup and respect the UX design.
@@ -139,11 +140,10 @@ class BrowserToolbarCFRPresenter(
     }
 
     @VisibleForTesting
-    @Suppress("LongMethod")
     internal fun showCookieBannersCFR() {
         CFRPopup(
             anchor = toolbar.findViewById(
-                R.id.mozac_browser_toolbar_site_info_indicator,
+                toolbarR.id.mozac_browser_toolbar_site_info_indicator,
             ),
             properties = CFRPopupProperties(
                 popupAlignment = INDICATOR_CENTERED_IN_ANCHOR,
@@ -200,11 +200,10 @@ class BrowserToolbarCFRPresenter(
     }
 
     @VisibleForTesting
-    @Suppress("LongMethod")
     internal fun showTabSwipeCFR() {
         CFRPopup(
             anchor = toolbar.findViewById(
-                R.id.mozac_browser_toolbar_background,
+                toolbarR.id.mozac_browser_toolbar_background,
             ),
             properties = CFRPopupProperties(
                 popupAlignment = BODY_TO_ANCHOR_CENTER,
@@ -221,7 +220,7 @@ class BrowserToolbarCFRPresenter(
                 indicatorArrowStartOffset = TAB_SWIPE_CFR_ARROW_OFFSET.dp,
             ),
             onDismiss = {
-                AddressToolbar.swipeCfrDismissed.record(NoExtras())
+                Events.toolbarTabSwipeCfrDismissed.record(NoExtras())
                 popup = null
             },
             text = {
@@ -237,7 +236,7 @@ class BrowserToolbarCFRPresenter(
                 }
             },
         ).run {
-            AddressToolbar.swipeCfrShown.record(NoExtras())
+            Events.toolbarTabSwipeCfrShown.record(NoExtras())
             popup = this
             show()
         }

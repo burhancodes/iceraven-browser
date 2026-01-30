@@ -36,14 +36,12 @@ import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.util.dpToPx
 import mozilla.components.support.ktx.kotlin.isContentUrl
 import mozilla.telemetry.glean.private.NoExtras
-import org.mozilla.fenix.GleanMetrics.AddressToolbar
-import org.mozilla.fenix.GleanMetrics.NavigationBar
 import org.mozilla.fenix.GleanMetrics.ReaderMode
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.store.BrowserScreenAction.ReaderModeStatusUpdated
+import org.mozilla.fenix.components.QrScanFenixFeature
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.components.VoiceSearchFeature
-import org.mozilla.fenix.components.appstate.qrScanner.QrScannerBinding
 import org.mozilla.fenix.components.toolbar.BrowserToolbarComposable
 import org.mozilla.fenix.components.toolbar.BrowserToolbarView
 import org.mozilla.fenix.components.toolbar.FenixBrowserToolbarView
@@ -54,6 +52,7 @@ import org.mozilla.fenix.compose.snackbar.SnackbarState
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.isLargeWindow
 import org.mozilla.fenix.ext.nav
+import org.mozilla.fenix.ext.navigateSafe
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
 import org.mozilla.fenix.ext.settings
@@ -61,7 +60,12 @@ import org.mozilla.fenix.home.HomeFragment
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.settings.quicksettings.protections.cookiebanners.getCookieBannerUIMode
 import org.mozilla.fenix.shortcut.PwaOnboardingObserver
+import org.mozilla.fenix.telemetry.ACTION_SHARE_CLICKED
+import org.mozilla.fenix.telemetry.SOURCE_ADDRESS_BAR
+import org.mozilla.fenix.termsofuse.store.Surface
 import org.mozilla.fenix.theme.ThemeManager
+import mozilla.components.ui.icons.R as iconsR
+import org.mozilla.fenix.GleanMetrics.Toolbar as GleanMetricsToolbar
 
 /**
  * Fragment used for browsing the web within the main app.
@@ -71,13 +75,19 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
     private val windowFeature = ViewBoundFeatureWrapper<WindowFeature>()
     private val openInAppOnboardingObserver = ViewBoundFeatureWrapper<OpenInAppOnboardingObserver>()
     private val translationsBinding = ViewBoundFeatureWrapper<TranslationsBinding>()
+    private val translationsBannerIntegration = ViewBoundFeatureWrapper<TranslationsBannerIntegration>()
 
-    private val voiceSearchFeature by lazy(LazyThreadSafetyMode.NONE) {
+    private var qrScanFenixFeature: ViewBoundFeatureWrapper<QrScanFenixFeature>? =
+        ViewBoundFeatureWrapper<QrScanFenixFeature>()
+    private val qrScanLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            qrScanFenixFeature?.get()?.handleToolbarQrScanResults(result.resultCode, result.data)
+        }
+    private var voiceSearchFeature: ViewBoundFeatureWrapper<VoiceSearchFeature>? =
         ViewBoundFeatureWrapper<VoiceSearchFeature>()
-    }
     private val voiceSearchLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            voiceSearchFeature.get()?.handleVoiceSearchResult(result.resultCode, result.data)
+            voiceSearchFeature?.get()?.handleVoiceSearchResult(result.resultCode, result.data)
         }
 
     private var readerModeAvailable = false
@@ -92,7 +102,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
     private var refreshAction: BrowserToolbar.TwoStateButton? = null
     private var isTablet: Boolean = false
 
-    @Suppress("LongMethod")
     override fun initializeUI(view: View, tab: SessionState) {
         super.initializeUI(view, tab)
 
@@ -127,6 +136,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 initBrowserToolbarComposableUpdates(view)
             }
         }
+        initTranslationsUpdates(context = context, rootView = view)
 
         thumbnailsFeature.set(
             feature = BrowserThumbnails(context, binding.engineView, components.core.store),
@@ -169,9 +179,8 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
     private fun initBrowserToolbarComposableUpdates(rootView: View) {
         initReaderModeUpdates(rootView.context, rootView)
-        initTranslationsUpdates(rootView.context, rootView)
-        QrScannerBinding.register(this)
-        initVoiceSearchSupport(rootView.context)
+        qrScanFenixFeature = QrScanFenixFeature.register(this, qrScanLauncher)
+        voiceSearchFeature = VoiceSearchFeature.register(this, voiceSearchLauncher)
     }
 
     private fun initSharePageAction(context: Context) {
@@ -180,7 +189,12 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             val sharePageAction = BrowserToolbar.createShareBrowserAction(
                 context = context,
             ) {
-                AddressToolbar.shareTapped.record((NoExtras()))
+                GleanMetricsToolbar.buttonTapped.record(
+                    GleanMetricsToolbar.ButtonTappedExtra(
+                        source = SOURCE_ADDRESS_BAR,
+                        item = ACTION_SHARE_CLICKED,
+                    ),
+                )
                 browserToolbarInteractor.onShareActionClicked()
             }
 
@@ -200,7 +214,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             Toolbar.ActionButton(
                 AppCompatResources.getDrawable(
                     context,
-                    R.drawable.mozac_ic_translate_24,
+                    iconsR.drawable.mozac_ic_translate_24,
                 ),
                 contentDescription = context.getString(R.string.browser_toolbar_translate),
                 iconTintColorResource = ThemeManager.resolveAttribute(R.attr.textPrimary, context),
@@ -255,7 +269,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
     private fun initReaderModeUpdates(context: Context, view: View) {
         readerViewFeature.set(
-            feature = context.components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+            feature = context.components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
                 ReaderViewFeature(
                     context = context,
                     engine = context.components.core.engine,
@@ -272,35 +286,38 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         )
     }
 
-    private fun initTranslationsUpdates(context: Context, view: View) {
-        if (!FxNimbus.features.translations.value().mainFlowToolbarEnabled) return
-
-        translationsBinding.set(
-            feature = TranslationsBinding(
+    private fun initTranslationsUpdates(context: Context, rootView: View) {
+        translationsBannerIntegration.set(
+            feature = TranslationsBannerIntegration(
                 browserStore = context.components.core.store,
                 browserScreenStore = browserScreenStore,
-                appStore = context.components.appStore,
-                onTranslationStatusUpdate = {
-                    translationsAvailable = it.isTranslationPossible
+                binding = binding,
+                onExpand = {
+                    val directions =
+                        BrowserFragmentDirections.actionBrowserFragmentToTranslationsDialogFragment()
+                    findNavController().navigateSafe(R.id.browserFragment, directions)
                 },
-                onShowTranslationsDialog = browserToolbarInteractor::onTranslationsButtonClicked,
-                navController = findNavController(),
             ),
             owner = this,
-            view = view,
+            view = rootView,
         )
-    }
 
-    private fun initVoiceSearchSupport(context: Context) {
-        voiceSearchFeature.set(
-            feature = VoiceSearchFeature(
-                context = context,
-                appStore = context.components.appStore,
-                voiceSearchLauncher = voiceSearchLauncher,
-            ),
-            owner = viewLifecycleOwner,
-            view = binding.root,
-        )
+        if (FxNimbus.features.translations.value().mainFlowToolbarEnabled) {
+            translationsBinding.set(
+                feature = TranslationsBinding(
+                    browserStore = rootView.context.components.core.store,
+                    browserScreenStore = browserScreenStore,
+                    appStore = rootView.context.components.appStore,
+                    onTranslationStatusUpdate = {
+                        translationsAvailable = it.isTranslationPossible
+                    },
+                    onShowTranslationsDialog = browserToolbarInteractor::onTranslationsButtonClicked,
+                    navController = findNavController(),
+                ),
+                owner = this,
+                view = rootView,
+            )
+        }
     }
 
     private fun initReaderMode(context: Context, view: View) {
@@ -329,7 +346,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         (browserToolbarView as BrowserToolbarView).toolbar.addPageAction(readerModeAction)
 
         readerViewFeature.set(
-            feature = context.components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+            feature = context.components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
                 ReaderViewFeature(
                     context = context,
                     engine = context.components.core.engine,
@@ -365,7 +382,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         homeAction = BrowserToolbar.Button(
             imageDrawable = AppCompatResources.getDrawable(
                 context,
-                R.drawable.mozac_ic_home_24,
+                iconsR.drawable.mozac_ic_home_24,
             )!!,
             contentDescription = context.getString(R.string.browser_toolbar_home),
             iconTintColorResource = ThemeManager.resolveAttribute(R.attr.textPrimary, context),
@@ -422,7 +439,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             backAction = BrowserToolbar.TwoStateButton(
                 primaryImage = AppCompatResources.getDrawable(
                     context,
-                    R.drawable.mozac_ic_back_24,
+                    iconsR.drawable.mozac_ic_back_24,
                 )!!,
                 primaryContentDescription = context.getString(R.string.browser_menu_back),
                 primaryImageTintResource = enableTint,
@@ -430,17 +447,11 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 secondaryImageTintResource = disableTint,
                 disableInSecondaryState = true,
                 longClickListener = {
-                    if (!this.isTablet) {
-                        NavigationBar.browserBackLongTapped.record(NoExtras())
-                    }
                     browserToolbarInteractor.onBrowserToolbarMenuItemTapped(
                         ToolbarMenu.Item.Back(viewHistory = true, isOnToolbar = true),
                     )
                 },
                 listener = {
-                    if (!this.isTablet) {
-                        NavigationBar.browserBackTapped.record(NoExtras())
-                    }
                     browserToolbarInteractor.onBrowserToolbarMenuItemTapped(
                         ToolbarMenu.Item.Back(viewHistory = false, isOnToolbar = true),
                     )
@@ -454,7 +465,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             forwardAction = BrowserToolbar.TwoStateButton(
                 primaryImage = AppCompatResources.getDrawable(
                     context,
-                    R.drawable.mozac_ic_forward_24,
+                    iconsR.drawable.mozac_ic_forward_24,
                 )!!,
                 primaryContentDescription = context.getString(R.string.browser_menu_forward),
                 primaryImageTintResource = enableTint,
@@ -462,17 +473,11 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 secondaryImageTintResource = disableTint,
                 disableInSecondaryState = true,
                 longClickListener = {
-                    if (!this.isTablet) {
-                        NavigationBar.browserForwardLongTapped.record(NoExtras())
-                    }
                     browserToolbarInteractor.onBrowserToolbarMenuItemTapped(
                         ToolbarMenu.Item.Forward(viewHistory = true, isOnToolbar = true),
                     )
                 },
                 listener = {
-                    if (!this.isTablet) {
-                        NavigationBar.browserForwardTapped.record(NoExtras())
-                    }
                     browserToolbarInteractor.onBrowserToolbarMenuItemTapped(
                         ToolbarMenu.Item.Forward(viewHistory = false, isOnToolbar = true),
                     )
@@ -492,7 +497,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             refreshAction = BrowserToolbar.TwoStateButton(
                 primaryImage = AppCompatResources.getDrawable(
                     context,
-                    R.drawable.mozac_ic_arrow_clockwise_24,
+                    iconsR.drawable.mozac_ic_arrow_clockwise_24,
                 )!!,
                 primaryContentDescription = context.getString(R.string.browser_menu_refresh),
                 primaryImageTintResource = enableTint,
@@ -501,7 +506,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 },
                 secondaryImage = AppCompatResources.getDrawable(
                     context,
-                    R.drawable.mozac_ic_stop,
+                    iconsR.drawable.mozac_ic_stop,
                 )!!,
                 secondaryContentDescription = context.getString(R.string.browser_menu_stop),
                 disableInSecondaryState = false,
@@ -568,7 +573,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
         if (requireComponents.termsOfUseManager.shouldShowTermsOfUsePromptOnBrowserFragment()) {
             findNavController().navigate(
-                BrowserFragmentDirections.actionGlobalTermsOfUseDialog(),
+                BrowserFragmentDirections.actionGlobalTermsOfUseDialog(Surface.BROWSER),
             )
         }
     }
@@ -635,7 +640,8 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                                 sessionId = tab.id,
                                 url = tab.content.url,
                                 title = tab.content.title,
-                                isSecured = tab.content.securityInfo.secure,
+                                isLocalPdf = tab.content.url.isContentUrl(),
+                                isSecured = tab.content.securityInfo.isSecure,
                                 sitePermissions = sitePermissions,
                                 certificateName = tab.content.securityInfo.issuer,
                                 permissionHighlights = tab.content.permissionHighlights,
@@ -648,7 +654,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                                 url = tab.content.url,
                                 title = tab.content.title,
                                 isLocalPdf = tab.content.url.isContentUrl(),
-                                isSecured = tab.content.securityInfo.secure,
+                                isSecured = tab.content.securityInfo.isSecure,
                                 sitePermissions = sitePermissions,
                                 gravity = getAppropriateLayoutGravity(),
                                 certificateName = tab.content.securityInfo.issuer,
@@ -682,8 +688,8 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
             isNewCollection: Boolean = false,
         ) {
             val messageResId = when {
-                isNewCollection -> R.string.create_collection_tabs_saved_new_collection
-                tabSize == 1 -> R.string.create_collection_tab_saved
+                isNewCollection -> R.string.create_collection_tabs_saved_new_collection_2
+                tabSize == 1 -> R.string.create_collection_tab_saved_2
                 else -> return // Don't show snackbar for multiple tabs
             }
 
@@ -737,9 +743,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
          */
         const val READER_MODE_WEIGHT = 1
         const val TRANSLATIONS_WEIGHT = 2
-        const val REVIEW_QUALITY_CHECK_WEIGHT = 3
         const val SHARE_WEIGHT = 4
-        const val RELOAD_WEIGHT = 5
         const val OPEN_IN_ACTION_WEIGHT = 6
     }
 }

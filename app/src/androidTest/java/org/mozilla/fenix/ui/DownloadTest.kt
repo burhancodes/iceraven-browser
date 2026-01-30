@@ -12,6 +12,7 @@ import androidx.test.espresso.intent.rule.IntentsRule
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import org.mozilla.fenix.customannotations.SkipLeaks
 import org.mozilla.fenix.customannotations.SmokeTest
 import org.mozilla.fenix.helpers.AppAndSystemHelper.assertExternalAppOpens
 import org.mozilla.fenix.helpers.AppAndSystemHelper.assertNativeAppOpens
@@ -23,7 +24,7 @@ import org.mozilla.fenix.helpers.Constants.PackageName.GOOGLE_DOCS
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithResIdAndText
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithText
-import org.mozilla.fenix.helpers.TestAssetHelper
+import org.mozilla.fenix.helpers.TestAssetHelper.getGenericAsset
 import org.mozilla.fenix.helpers.TestHelper.clickSnackbarButton
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.verifySnackBarText
@@ -74,12 +75,13 @@ class DownloadTest : TestSetup() {
     }
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2299405
+    @Ignore("Failing, see https://bugzilla.mozilla.org/show_bug.cgi?id=1987355")
     @Test
     fun verifyTheDownloadFailedNotificationsTest() {
         downloadRobot {
             openPageAndDownloadFile(url = downloadTestPage.toUri(), downloadFile = "1GB.zip")
             setNetworkEnabled(enabled = false)
-            verifyDownloadFailedSnackbar(fileName = "1GB.zip")
+            verifyDownloadFailedSnackbar(activityTestRule, fileName = "1GB.zip")
             clickSnackbarButton(composeTestRule = activityTestRule, "DETAILS")
         }.openNotificationShade {
             verifySystemNotificationExists("Download failed")
@@ -170,6 +172,7 @@ class DownloadTest : TestSetup() {
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/1114970
     @Test
+    @SkipLeaks(reasons = ["https://bugzilla.mozilla.org/show_bug.cgi?id=2004099"])
     fun deleteDownloadedFileTest() {
         downloadRobot {
             openPageAndDownloadFile(url = downloadTestPage.toUri(), downloadFile = "smallZip.zip")
@@ -180,7 +183,7 @@ class DownloadTest : TestSetup() {
             verifyDownloadedFileExistsInDownloadsList(activityTestRule, "smallZip.zip")
             clickDownloadItemMenuIcon(activityTestRule, "smallZip.zip")
             deleteDownloadedItem(activityTestRule, "smallZip.zip")
-            clickSnackbarButton(activityTestRule, "UNDO")
+            clickSnackbarButton(activityTestRule, "Undo")
             verifyDownloadedFileExistsInDownloadsList(activityTestRule, "smallZip.zip")
             clickDownloadItemMenuIcon(activityTestRule, "smallZip.zip")
             deleteDownloadedItem(activityTestRule, "smallZip.zip")
@@ -213,7 +216,7 @@ class DownloadTest : TestSetup() {
             openMultiSelectMoreOptionsMenu(activityTestRule)
             clickMultiSelectRemoveButton(activityTestRule)
             clickMultiSelectDeleteDialogButton(activityTestRule)
-            clickSnackbarButton(activityTestRule, "UNDO")
+            clickSnackbarButton(activityTestRule, "Undo")
             verifyDownloadedFileExistsInDownloadsList(activityTestRule, firstDownloadedFile)
             verifyDownloadedFileExistsInDownloadsList(activityTestRule, secondDownloadedFile)
             longClickDownloadedItem(activityTestRule, firstDownloadedFile)
@@ -278,12 +281,13 @@ class DownloadTest : TestSetup() {
     }
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2299297
+    @Ignore("Failing, see https://bugzilla.mozilla.org/show_bug.cgi?id=1987355")
     @Test
     fun notificationCanBeDismissedIfDownloadIsInterruptedTest() {
         downloadRobot {
             openPageAndDownloadFile(url = downloadTestPage.toUri(), downloadFile = "1GB.zip")
             setNetworkEnabled(enabled = false)
-            verifyDownloadFailedSnackbar(fileName = "1GB.zip")
+            verifyDownloadFailedSnackbar(activityTestRule, fileName = "1GB.zip")
         }
         browserScreen {
         }.openNotificationShade {
@@ -349,15 +353,14 @@ class DownloadTest : TestSetup() {
     @SmokeTest
     @Test
     fun saveAsPdfFunctionalityTest() {
-        val genericURL =
-            TestAssetHelper.getGenericAsset(mockWebServer, 3)
+        val genericURL = mockWebServer.getGenericAsset(3)
         downloadFile = "pdfForm.pdf"
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(genericURL.url) {
             clickPageObject(itemWithText("PDF form file"))
             waitForPageToLoad()
-            clickPageObject(itemWithResIdAndText("android:id/button2", "CANCEL"))
+            clickPageObject(itemWithResIdAndText("android:id/button2", "Cancel"))
             fillPdfForm("Firefox")
         }.openThreeDotMenu {
         }.clickShareButton {
@@ -371,6 +374,7 @@ class DownloadTest : TestSetup() {
     }
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/244125
+    @Ignore("Failing, see https://bugzilla.mozilla.org/show_bug.cgi?id=1983769")
     @Test
     fun restartDownloadFromAppNotificationAfterConnectionIsInterruptedTest() {
         downloadFile = "3GB.zip"
@@ -378,7 +382,7 @@ class DownloadTest : TestSetup() {
         downloadRobot {
             openPageAndDownloadFile(url = downloadTestPage.toUri(), downloadFile = "3GB.zip")
             setNetworkEnabled(false)
-            verifyDownloadFailedSnackbar(fileName = "3GB.zip")
+            verifyDownloadFailedSnackbar(activityTestRule, fileName = "3GB.zip")
             setNetworkEnabled(true)
             clickSnackbarButton(composeTestRule = activityTestRule, "DETAILS")
             verifyDownloadFileFailedMessage(activityTestRule, "3GB.zip")
@@ -431,9 +435,34 @@ class DownloadTest : TestSetup() {
             verifyDownloadedFileExistsInDownloadsList(activityTestRule, "web_icon.png")
             clickDownloadItemMenuIcon(activityTestRule, "web_icon.png")
         }.shareDownloadedItem(activityTestRule, "web_icon.png") {
-            verifyAndroidShareLayout()
+            expandAndroidShareLayout("Gmail")
             clickSharingApp("Gmail", GMAIL_APP)
             assertNativeAppOpens(GMAIL_APP)
+        }
+    }
+
+    // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/457111
+    @Ignore("Failing, see https://bugzilla.mozilla.org/show_bug.cgi?id=1983769")
+    @Test
+    fun downloadRestartAfterConnectionIsReestablishedTest() {
+        downloadFile = "3GB.zip"
+
+        downloadRobot {
+            openPageAndDownloadFile(url = downloadTestPage.toUri(), downloadFile = "3GB.zip")
+            downloadRobot {
+            }.openNotificationShade {
+                expandNotificationMessage("3GB.zip")
+                clickDownloadNotificationControlButton("PAUSE")
+                setNetworkEnabled(false)
+                verifySystemNotificationExists("Download paused")
+                clickDownloadNotificationControlButton("RESUME")
+                verifySystemNotificationExists("Download failed")
+                setNetworkEnabled(enabled = true)
+                clickDownloadNotificationControlButton("TRY AGAIN")
+                expandNotificationMessage("3GB.zip")
+                clickDownloadNotificationControlButton("CANCEL")
+                verifySystemNotificationDoesNotExist("3GB.zip")
+            }
         }
     }
 }

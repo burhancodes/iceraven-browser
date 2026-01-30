@@ -38,7 +38,6 @@ class AddonPermissionsDetailsFragment : Fragment() {
 
     private val args by navArgs<AddonPermissionsDetailsFragmentArgs>()
 
-    @Suppress("LongMethod")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -138,7 +137,7 @@ class AddonPermissionsDetailsFragment : Fragment() {
                 onUpdatePermissionsSuccess(it)
             },
             onError = {
-                /** No-Op **/
+                // No-Op
             },
         )
     }
@@ -156,7 +155,7 @@ class AddonPermissionsDetailsFragment : Fragment() {
                 onUpdatePermissionsSuccess(it)
             },
             onError = {
-                /** No-Op **/
+                // No-Op
             },
         )
     }

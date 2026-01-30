@@ -88,7 +88,7 @@ class AppRequestInterceptor(
     }
 
     /**
-     * Intercepts [uri] request to [ABOUT_HOME] and navigates to the homepage.
+     * Intercepts [uri] request to [ABOUT_HOME_URL] and navigates to the homepage.
      *
      * @param uri The URI of the request.
      * @return True if the [uri] request was intercepted and false otherwise.
@@ -163,6 +163,7 @@ class AppRequestInterceptor(
         ErrorType.ERROR_SAFEBROWSING_MALWARE_URI,
         ErrorType.ERROR_SAFEBROWSING_PHISHING_URI,
         ErrorType.ERROR_SAFEBROWSING_UNWANTED_URI,
+        ErrorType.ERROR_HARMFULADDON_URI,
         -> RiskLevel.High
     }
 

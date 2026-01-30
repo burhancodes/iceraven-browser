@@ -4,9 +4,10 @@
 
 package org.mozilla.fenix.components.menu
 
-import android.app.AlertDialog
 import android.app.PendingIntent
 import android.content.Intent
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.runBlocking
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.state.state.ReaderState
@@ -23,7 +24,6 @@ import mozilla.components.feature.top.sites.TopSite
 import mozilla.components.feature.top.sites.TopSitesUseCases
 import mozilla.components.support.test.any
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
@@ -75,7 +75,7 @@ class MenuDialogMiddlewareTest {
     private val addonManager: AddonManager = mock()
     private val onDeleteAndQuit: () -> Unit = mock()
 
-    private lateinit var alertDialogBuilder: AlertDialog.Builder
+    private lateinit var alertDialogBuilder: MaterialAlertDialogBuilder
     private lateinit var pinnedSiteStorage: PinnedSiteStorage
     private lateinit var addPinnedSiteUseCase: TopSitesUseCases.AddPinnedSiteUseCase
     private lateinit var removePinnedSiteUseCase: TopSitesUseCases.RemoveTopSiteUseCase
@@ -142,7 +142,7 @@ class MenuDialogMiddlewareTest {
             ),
         )
 
-        assertEquals(guid, store.state.browserMenuState!!.bookmarkState.guid)
+        assertEquals(guid.getOrNull()!!, store.state.browserMenuState!!.bookmarkState.guid)
         assertTrue(store.state.browserMenuState!!.bookmarkState.isBookmarked)
     }
 
@@ -369,11 +369,10 @@ class MenuDialogMiddlewareTest {
             onDismiss = { dismissWasCalled = true },
         )
 
-        assertEquals(guid, store.state.browserMenuState!!.bookmarkState.guid)
+        assertEquals(guid.getOrNull()!!, store.state.browserMenuState!!.bookmarkState.guid)
         assertTrue(store.state.browserMenuState!!.bookmarkState.isBookmarked)
 
         store.dispatch(MenuAction.AddBookmark)
-        store.waitUntilIdle()
 
         verify(addBookmarkUseCase, never()).invoke(url = url, title = title)
         captureMiddleware.assertNotDispatched(BookmarkAction.BookmarkAdded::class)
@@ -501,7 +500,6 @@ class MenuDialogMiddlewareTest {
         assertTrue(store.state.browserMenuState!!.isPinned)
 
         store.dispatch(MenuAction.AddShortcut)
-        store.waitUntilIdle()
 
         verify(addPinnedSiteUseCase, never()).invoke(url = url, title = title)
         verify(appStore, never()).dispatch(
@@ -542,9 +540,6 @@ class MenuDialogMiddlewareTest {
         store.dispatch(MenuAction.RemoveShortcut)
 
         verify(removePinnedSiteUseCase, never()).invoke(topSite = topSite)
-        verify(appStore, never()).dispatch(
-            AppAction.ShortcutAction.ShortcutRemoved,
-        )
         assertFalse(dismissedWasCalled)
     }
 
@@ -582,9 +577,6 @@ class MenuDialogMiddlewareTest {
         store.dispatch(MenuAction.RemoveShortcut)
 
         verify(removePinnedSiteUseCase).invoke(topSite = topSite)
-        verify(appStore).dispatch(
-            AppAction.ShortcutAction.ShortcutRemoved,
-        )
         assertTrue(dismissedWasCalled)
     }
 
@@ -1060,7 +1052,7 @@ class MenuDialogMiddlewareTest {
                 removePinnedSitesUseCase = removePinnedSiteUseCase,
                 requestDesktopSiteUseCase = requestDesktopSiteUseCase,
                 tabsUseCases = tabsUseCases,
-                alertDialogBuilder = alertDialogBuilder,
+                materialAlertDialogBuilder = alertDialogBuilder,
                 topSitesMaxLimit = TOP_SITES_MAX_COUNT,
                 onDeleteAndQuit = onDeleteAndQuit,
                 onDismiss = onDismiss,

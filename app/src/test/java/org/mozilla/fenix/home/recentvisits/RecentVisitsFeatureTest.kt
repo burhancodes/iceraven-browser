@@ -19,7 +19,6 @@ import mozilla.components.concept.storage.HistoryHighlightWeights
 import mozilla.components.concept.storage.HistoryMetadata
 import mozilla.components.concept.storage.HistoryMetadataKey
 import mozilla.components.concept.storage.HistoryMetadataStorage
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -38,7 +37,6 @@ import org.mozilla.fenix.home.recentvisits.RecentlyVisitedItemInternal.HistoryHi
 import org.mozilla.fenix.utils.Settings
 import kotlin.random.Random
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class RecentVisitsFeatureTest {
 
     private lateinit var historyHightlightsStorage: PlacesHistoryStorage
@@ -398,7 +396,6 @@ class RecentVisitsFeatureTest {
         every { feature.getCombinedHistory(any(), any()) } returns expected
 
         feature.updateState(emptyList(), emptyList())
-        appStore.waitUntilIdle()
 
         middleware.assertLastAction(AppAction.RecentHistoryChange::class) {
             assertEquals(expected, it.recentHistory)
@@ -648,6 +645,7 @@ class RecentVisitsFeatureTest {
         result.forEach { assertEquals("https://mozilla.org", it.historyHighlight.url) }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class) // advanceUntilIdle
     private fun startRecentVisitsFeature() {
         val feature = RecentVisitsFeature(
             appStore,
@@ -662,7 +660,6 @@ class RecentVisitsFeatureTest {
         feature.start()
 
         scope.advanceUntilIdle()
-        appStore.waitUntilIdle()
 
         coVerify {
             historyMetadataStorage.getHistoryMetadataSince(any())

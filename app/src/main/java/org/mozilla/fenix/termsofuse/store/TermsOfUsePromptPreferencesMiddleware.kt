@@ -21,20 +21,27 @@ class TermsOfUsePromptPreferencesMiddleware(
         action: TermsOfUsePromptAction,
     ) {
         when (action) {
-            is TermsOfUsePromptAction.OnAcceptClicked -> {
+            is TermsOfUsePromptAction.OnAcceptClicked ->
                 repository.updateHasAcceptedTermsOfUsePreference()
-            }
 
-            is TermsOfUsePromptAction.OnNotNowClicked -> {
+            is TermsOfUsePromptAction.OnRemindMeLaterClicked -> {
                 repository.updateHasPostponedAcceptingTermsOfUsePreference()
             }
 
-            is TermsOfUsePromptAction.OnPromptManuallyDismissed -> {
+            is TermsOfUsePromptAction.OnPromptManuallyDismissed ->
                 repository.updateHasPostponedAcceptingTermsOfUsePreference()
-            }
 
-            is TermsOfUsePromptAction.OnPromptDismissed -> {
+            is TermsOfUsePromptAction.OnPromptDismissed ->
                 repository.updateLastTermsOfUsePromptTimeInMillis()
+
+            is TermsOfUsePromptAction.OnImpression ->
+                repository.incrementTermsOfUsePromptDisplayedCount()
+
+            // no-ops
+            is TermsOfUsePromptAction.OnLearnMoreClicked,
+            is TermsOfUsePromptAction.OnPrivacyNoticeClicked,
+            is TermsOfUsePromptAction.OnTermsOfUseClicked,
+                -> {
             }
         }
 

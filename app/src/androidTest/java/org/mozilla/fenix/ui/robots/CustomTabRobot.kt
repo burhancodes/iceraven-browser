@@ -5,8 +5,11 @@ package org.mozilla.fenix.ui.robots
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -40,6 +43,7 @@ import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.TestHelper.waitForAppWindowToBeUpdated
 import org.mozilla.fenix.helpers.TestHelper.waitForObjects
 import org.mozilla.fenix.helpers.click
+import mozilla.components.feature.customtabs.R as customtabsR
 
 /**
  *  Implementation of the robot pattern for Custom tabs
@@ -51,14 +55,30 @@ class CustomTabRobot {
             itemWithResId("$packageName:id/mozac_browser_toolbar_site_info_indicator"),
         )
 
+    fun verifyCustomTabsSiteInfoButtonWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "verifyCustomTabsSiteInfoButtonWithComposableToolbar: Trying to verify that the site info button is displayed")
+        composeTestRule.onNodeWithContentDescription("Site information").assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabsSiteInfoButtonWithComposableToolbar: Verified that the site info button is displayed")
+    }
+
     fun verifyCustomTabsShareButton() =
         assertUIObjectExists(
-            itemWithDescription(getStringResource(R.string.mozac_feature_customtabs_share_link)),
+            itemWithDescription(getStringResource(customtabsR.string.mozac_feature_customtabs_share_link)),
         )
+
+    fun verifyCustomTabsShareButtonWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "verifyCustomTabsShareButtonWithComposableToolbar: Trying to verify that the share button is displayed")
+        composeTestRule.onNodeWithContentDescription("Share link").assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabsShareButtonWithComposableToolbar: Verified that the share button is displayed")
+    }
 
     fun verifyMainMenuButton() = assertUIObjectExists(mainMenuButton())
 
-    fun verifyMainMenuComposeButton() = assertUIObjectExists(mainMenuButtonFromRedesignedToolbar())
+    fun verifyMainMenuComposeButtonWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "verifyMainMenuComposeButtonWithComposableToolbar: Trying to verify that the main menu button is displayed")
+        composeTestRule.onNodeWithContentDescription("More options").assertIsDisplayed()
+        Log.i(TAG, "verifyMainMenuComposeButtonWithComposableToolbar: Verified that the main menu button is displayed")
+    }
 
     fun verifyDesktopSiteButtonExists() {
         Log.i(TAG, "verifyDesktopSiteButtonExists: Trying to verify that the request desktop site button is displayed")
@@ -101,6 +121,12 @@ class CustomTabRobot {
         Log.i(TAG, "verifyCustomTabCloseButton: Verified that the close custom tab button is displayed")
     }
 
+    fun verifyCustomTabCloseButtonWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "verifyCustomTabCloseButtonWithComposableToolbar: Trying to verify that the close custom tab button is displayed")
+        composeTestRule.onNodeWithContentDescription(getStringResource(customtabsR.string.mozac_feature_customtabs_exit_button)).assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabCloseButtonWithComposableToolbar: Verified that the close custom tab button is displayed")
+    }
+
     fun verifyCustomTabToolbarTitle(title: String) {
         waitForPageToLoad()
 
@@ -121,6 +147,12 @@ class CustomTabRobot {
         )
     }
 
+    fun verifyCustomTabToolbarTitleWithComposableToolbar(composeTestRule: ComposeTestRule, title: String) {
+        Log.i(TAG, "verifyCustomTabToolbarTitleWithComposableToolbar: Trying to verify that the custom tab title: $title is displayed")
+        composeTestRule.onNodeWithText(title, useUnmergedTree = true).assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabToolbarTitleWithComposableToolbar: Verified that the custom tab title: $title is displayed")
+    }
+
     fun verifyCustomTabUrl(url: String) {
         val uri = Uri.parse(url)
         val expectedText = uri.host ?: url // fallback if host is null
@@ -128,6 +160,14 @@ class CustomTabRobot {
         assertUIObjectExists(
             itemWithResIdContainingText("$packageName:id/mozac_browser_toolbar_url_view", expectedText),
         )
+    }
+
+    fun verifyCustomTabUrlWithComposableToolbar(composeTestRule: ComposeTestRule, url: String) {
+        val uri = Uri.parse(url)
+        val expectedText = uri.host ?: url // fallback if host is null
+        Log.i(TAG, "verifyCustomTabUrlWithComposableToolbar: Trying to verify that the custom tab url: $expectedText is displayed")
+        composeTestRule.onNodeWithText(expectedText, substring = true, useUnmergedTree = true).assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabUrlWithComposableToolbar: Verified that the custom tab url: $expectedText is displayed")
     }
 
     fun longCLickAndCopyToolbarUrl() {
@@ -168,8 +208,20 @@ class CustomTabRobot {
         Log.i(TAG, "clickCustomTabCloseButton: Clicked close custom tab button")
     }
 
+    fun clickCustomTabCloseButtonWithComposableToolbar(composeTestRule: ComposeTestRule) {
+        Log.i(TAG, "clickCustomTabCloseButtonWithComposableToolbar: Trying to click close custom tab button")
+        composeTestRule.onNodeWithContentDescription(getStringResource(customtabsR.string.mozac_feature_customtabs_exit_button)).performClick()
+        Log.i(TAG, "clickCustomTabCloseButtonWithComposableToolbar: Clicked close custom tab button")
+    }
+
     fun verifyCustomTabActionButton(customTabActionButtonDescription: String) =
         assertUIObjectExists(itemWithDescription(customTabActionButtonDescription))
+
+    fun verifyCustomTabActionButtonWithComposableToolbar(composeTestRule: ComposeTestRule, customTabActionButtonDescription: String) {
+        Log.i(TAG, "verifyCustomTabActionButtonWithComposableToolbar: Trying to verify that the custom tab action button is displayed")
+        composeTestRule.onNodeWithContentDescription(customTabActionButtonDescription).assertIsDisplayed()
+        Log.i(TAG, "verifyCustomTabActionButtonWithComposableToolbar: Verified that the custom tab action button is displayed")
+    }
 
     fun verifyPDFReaderToolbarItems() =
         assertUIObjectExists(
@@ -244,6 +296,15 @@ class CustomTabRobot {
             return Transition()
         }
 
+        fun openMainMenuWithComposableToolbar(composeTestRule: ComposeTestRule, interact: CustomTabRobot.() -> Unit): Transition {
+            Log.i(TAG, "openMainMenuWithComposableToolbar: Trying to click the main menu button")
+            composeTestRule.onNodeWithContentDescription(getStringResource(R.string.content_description_menu)).performClick()
+            Log.i(TAG, "openMainMenuWithComposableToolbar: Clicked the main menu button")
+
+            CustomTabRobot().interact()
+            return Transition()
+        }
+
         fun clickOpenInBrowserButton(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             Log.i(TAG, "clickOpenInBrowserButton: Trying to click the \"Open in Firefox\" button")
             openInBrowserButton().perform(click())
@@ -267,8 +328,8 @@ class CustomTabRobot {
 
         fun clickShareButton(interact: ShareOverlayRobot.() -> Unit): ShareOverlayRobot.Transition {
             Log.i(TAG, "clickShareButton: Trying to click the share button")
-            itemWithDescription(getStringResource(R.string.mozac_feature_customtabs_share_link)).waitForExists(waitingTime)
-            itemWithDescription(getStringResource(R.string.mozac_feature_customtabs_share_link)).click()
+            itemWithDescription(getStringResource(customtabsR.string.mozac_feature_customtabs_share_link)).waitForExists(waitingTime)
+            itemWithDescription(getStringResource(customtabsR.string.mozac_feature_customtabs_share_link)).click()
             Log.i(TAG, "clickShareButton: Clicked the share button")
 
             ShareOverlayRobot().interact()
@@ -327,6 +388,18 @@ class CustomTabRobot {
 
             BrowserRobot().interact()
             return BrowserRobot.Transition()
+        }
+
+        fun openUnifiedTrustPanel(interact: UnifiedTrustPanelRobot.() -> Unit): UnifiedTrustPanelRobot.Transition {
+            Log.i(TAG, "openUnifiedTrustPanel: Waiting for $waitingTime ms for site security button to exist")
+            itemWithResId("$packageName:id/mozac_browser_toolbar_site_info_indicator").waitForExists(waitingTime)
+            Log.i(TAG, "openUnifiedTrustPanel: Waited for $waitingTime ms for site security button to exist")
+            Log.i(TAG, "openUnifiedTrustPanel: Trying to click site security button")
+            itemWithResId("$packageName:id/mozac_browser_toolbar_site_info_indicator").click()
+            Log.i(TAG, "openUnifiedTrustPanel: Clicked site security button")
+
+            UnifiedTrustPanelRobot().interact()
+            return UnifiedTrustPanelRobot.Transition()
         }
     }
 }

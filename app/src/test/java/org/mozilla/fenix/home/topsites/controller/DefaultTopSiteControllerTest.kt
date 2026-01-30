@@ -5,6 +5,7 @@
 package org.mozilla.fenix.home.topsites.controller
 
 import androidx.navigation.NavController
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -32,6 +33,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.Pings
+import org.mozilla.fenix.GleanMetrics.ShortcutsLibrary
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
@@ -43,10 +45,9 @@ import org.mozilla.fenix.home.mars.MARSUseCases
 import org.mozilla.fenix.home.topsites.ShortcutsFragmentDirections
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.utils.Settings
-import org.robolectric.RobolectricTestRunner
 import java.lang.ref.WeakReference
 
-@RunWith(RobolectricTestRunner::class) // For gleanTestRule
+@RunWith(AndroidJUnit4::class)
 class DefaultTopSiteControllerTest {
 
     @get:Rule
@@ -405,7 +406,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -443,7 +444,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -530,7 +531,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -568,7 +569,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -606,7 +607,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -644,7 +645,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -726,7 +727,7 @@ class DefaultTopSiteControllerTest {
         assertNull(TopSites.contileClick.testGetValue())
 
         var topSiteImpressionPinged = false
-        Pings.topsitesImpression.testBeforeNextSubmit {
+        val job = Pings.topsitesImpression.testBeforeNextSubmit {
             assertEquals(3L, TopSites.contileTileId.testGetValue())
             assertEquals("mozilla", TopSites.contileAdvertiser.testGetValue())
             assertNull(TopSites.contileReportingUrl.testGetValue())
@@ -746,6 +747,7 @@ class DefaultTopSiteControllerTest {
         assertEquals("1", event[0].extra!!["position"])
         assertEquals("newtab", event[0].extra!!["source"])
 
+        job.join()
         assertTrue(topSiteImpressionPinged)
     }
 
@@ -768,7 +770,7 @@ class DefaultTopSiteControllerTest {
         assertNull(TopSites.contileImpression.testGetValue())
 
         var topSiteImpressionSubmitted = false
-        Pings.topsitesImpression.testBeforeNextSubmit {
+        val job = Pings.topsitesImpression.testBeforeNextSubmit {
             assertEquals(3L, TopSites.contileTileId.testGetValue())
             assertEquals("mozilla", TopSites.contileAdvertiser.testGetValue())
             assertNull(TopSites.contileReportingUrl.testGetValue())
@@ -788,6 +790,7 @@ class DefaultTopSiteControllerTest {
         assertEquals("1", event[0].extra!!["position"])
         assertEquals("newtab", event[0].extra!!["source"])
 
+        job.join()
         assertTrue(topSiteImpressionSubmitted)
     }
 
@@ -1043,6 +1046,13 @@ class DefaultTopSiteControllerTest {
         for (event in TopSites.openInPrivateTab.testGetValue()!!) {
             assertNull(event.extra)
         }
+    }
+
+    fun `WHEN screen is shown THEN impression is logged`() {
+        assertNull(ShortcutsLibrary.viewed.testGetValue())
+        val controller = createController()
+        controller.handleShortcutsLibraryViewed()
+        assertNotNull(ShortcutsLibrary.viewed.testGetValue())
     }
 
     private fun createController(): DefaultTopSiteController =

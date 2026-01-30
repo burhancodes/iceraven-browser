@@ -36,20 +36,22 @@ import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.menu.MenuController
 import mozilla.components.concept.menu.Orientation
 import mozilla.components.lib.state.ext.consumeFrom
+import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
+import mozilla.components.lib.state.helpers.StoreProvider.Companion.navBackStackStore
 import org.mozilla.fenix.BrowserDirection
+import org.mozilla.fenix.Config
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.SecureFragment
 import org.mozilla.fenix.biometricauthentication.AuthenticationStatus
 import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
-import org.mozilla.fenix.components.StoreProvider
+import org.mozilla.fenix.components.LogMiddleware
 import org.mozilla.fenix.databinding.FragmentSavedLoginsBinding
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.hideToolbar
 import org.mozilla.fenix.ext.registerForActivityResult
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.ext.showToolbar
-import org.mozilla.fenix.lifecycle.LifecycleHolder
 import org.mozilla.fenix.settings.biometric.DefaultBiometricUtils
 import org.mozilla.fenix.settings.logins.LoginsAction
 import org.mozilla.fenix.settings.logins.LoginsFragmentStore
@@ -68,6 +70,7 @@ import org.mozilla.fenix.settings.logins.ui.LoginsStore
 import org.mozilla.fenix.settings.logins.ui.SavedLoginsScreen
 import org.mozilla.fenix.settings.logins.view.SavedLoginsListView
 import org.mozilla.fenix.theme.FirefoxTheme
+import androidx.appcompat.R as appcompatR
 
 @SuppressWarnings("TooManyFunctions")
 class SavedLoginsFragment : SecureFragment(), MenuProvider {
@@ -151,34 +154,36 @@ class SavedLoginsFragment : SecureFragment(), MenuProvider {
         if (requireContext().settings().enableComposeLogins) {
             return ComposeView(requireContext()).apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                val buildStore = { navController: NavHostController ->
-                    val store = StoreProvider.get(this@SavedLoginsFragment) {
-                        val lifecycleHolder = LifecycleHolder(
-                            context = requireContext(),
-                            navController = this@SavedLoginsFragment.findNavController(),
-                            composeNavController = navController,
-                            homeActivity = (requireActivity() as HomeActivity),
-                        )
+                val buildStore = { composeNavController: NavHostController ->
+                    val homeActivity = (requireActivity() as HomeActivity)
+                    val navController = findNavController()
 
-                        LoginsStore(
-                            initialState = LoginsState.default.copy(
-                                sortOrder = LoginsSortOrder.fromString(
-                                    value = requireContext().settings().loginsListSortOrder,
-                                    default = LoginsSortOrder.Alphabetical,
-                                ),
+                    val store by fragmentStore(
+                        LoginsState.default.copy(
+                            sortOrder = LoginsSortOrder.fromString(
+                                value = requireContext().settings().loginsListSortOrder,
+                                default = LoginsSortOrder.Alphabetical,
                             ),
+                        ),
+                    ) {
+                        LoginsStore(
+                            initialState = it,
                             middleware = listOf(
+                                LogMiddleware(
+                                    tag = "LoginsStore",
+                                    shouldIncludeDetailedData = { Config.channel.isDebug },
+                                ),
                                 LoginsMiddleware(
                                     loginsStorage = requireContext().components.core.passwordsStorage,
-                                    getNavController = { lifecycleHolder.composeNavController },
-                                    exitLogins = { lifecycleHolder.navController.popBackStack() },
+                                    getNavController = { composeNavController },
+                                    exitLogins = { navController.popBackStack() },
                                     persistLoginsSortOrder = {
                                         DefaultSavedLoginsStorage(
-                                            lifecycleHolder.context.settings(),
+                                            context.settings(),
                                         ).savedLoginsSortOrder = it
                                     },
                                     openTab = { url, openInNewTab ->
-                                        lifecycleHolder.homeActivity.openToBrowserAndLoad(
+                                        homeActivity.openToBrowserAndLoad(
                                             searchTermOrURL = url,
                                             newTab = openInNewTab,
                                             from = BrowserDirection.FromSavedLoginsFragment,
@@ -187,25 +192,22 @@ class SavedLoginsFragment : SecureFragment(), MenuProvider {
                                             ),
                                         )
                                     },
-                                    clipboardManager = requireActivity().getSystemService(),
+                                    clipboardManager = homeActivity.getSystemService(),
                                 ),
                             ),
-                            lifecycleHolder = lifecycleHolder,
                         )
-                    }
-
-                    store.lifecycleHolder?.apply {
-                        this.navController = this@SavedLoginsFragment.findNavController()
-                        this.composeNavController = navController
-                        this.homeActivity = (requireActivity() as HomeActivity)
-                        this.context = requireContext()
                     }
 
                     store
                 }
                 setContent {
                     FirefoxTheme {
-                        SavedLoginsScreen(buildStore = buildStore)
+                        SavedLoginsScreen(
+                            buildStore = buildStore,
+                            exitLogins = {
+                                findNavController().popBackStack()
+                            },
+                        )
                     }
                 }
             }
@@ -214,12 +216,10 @@ class SavedLoginsFragment : SecureFragment(), MenuProvider {
 
         _binding = FragmentSavedLoginsBinding.bind(view)
 
-        savedLoginsStore =
-            StoreProvider.get(findNavController().getBackStackEntry(R.id.savedLogins)) {
-                LoginsFragmentStore(
-                    createInitialLoginsListState(requireContext().settings()),
-                )
-            }
+        savedLoginsStore = findNavController().getBackStackEntry(R.id.savedLogins)
+            .navBackStackStore(createInitialLoginsListState(requireContext().settings())) {
+                LoginsFragmentStore(it)
+            }.value
 
         loginsListController =
             LoginsListController(
@@ -318,7 +318,7 @@ class SavedLoginsFragment : SecureFragment(), MenuProvider {
             },
         )
 
-        val closeButton: ImageView = searchView.findViewById(R.id.search_close_btn) as ImageView
+        val closeButton: ImageView = searchView.findViewById(appcompatR.id.search_close_btn) as ImageView
         closeButton.setOnClickListener {
             searchView.setQuery("", false)
             searchQuery = savedLoginsStore.state.copy(

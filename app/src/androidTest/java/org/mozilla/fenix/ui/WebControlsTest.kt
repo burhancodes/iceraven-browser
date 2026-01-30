@@ -13,8 +13,8 @@ import org.mozilla.fenix.helpers.MatcherHelper.itemContainingText
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithDescription
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithResId
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithResIdAndText
-import org.mozilla.fenix.helpers.TestAssetHelper
-import org.mozilla.fenix.helpers.TestAssetHelper.getHTMLControlsFormAsset
+import org.mozilla.fenix.helpers.TestAssetHelper.externalLinksAsset
+import org.mozilla.fenix.helpers.TestAssetHelper.htmlControlsFormAsset
 import org.mozilla.fenix.helpers.TestHelper.waitForAppWindowToBeUpdated
 import org.mozilla.fenix.helpers.TestSetup
 import org.mozilla.fenix.helpers.perf.DetectMemoryLeaksRule
@@ -50,7 +50,7 @@ class WebControlsTest : TestSetup() {
         val currentDay = currentDate.dayOfMonth
         val currentMonth = currentDate.month
         val currentYear = currentDate.year
-        val htmlControlsPage = getHTMLControlsFormAsset(mockWebServer)
+        val htmlControlsPage = mockWebServer.htmlControlsFormAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(htmlControlsPage.url) {
@@ -59,26 +59,22 @@ class WebControlsTest : TestSetup() {
             clickPageObject(itemWithResId("submitDate"))
             verifyNoDateIsSelected()
             clickPageObject(itemWithResId("calendar"))
-            clickPageObject(itemWithDescription("$currentDay $currentMonth $currentYear"))
-            clickPageObject(itemContainingText("OK"))
+            clickPageObject(itemWithDescription("$currentMonth $currentDay"))
+            clickPageObject(itemContainingText("Set"))
             clickPageObject(itemWithResId("submitDate"))
             verifySelectedDate()
-            clickPageObject(itemWithResId("calendar"))
-            clickPageObject(itemContainingText("CLEAR"))
-            clickPageObject(itemWithResId("submitDate"))
-            verifyNoDateIsSelected()
         }
     }
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2316069
     @Test
     fun verifyClockFormInteractionsTest() {
-        val htmlControlsPage = getHTMLControlsFormAsset(mockWebServer)
+        val htmlControlsPage = mockWebServer.htmlControlsFormAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(htmlControlsPage.url) {
             clickPageObject(itemWithResId("clock"))
-            clickPageObject(itemContainingText("CANCEL"))
+            clickPageObject(itemContainingText("Cancel"))
             clickPageObject(itemWithResId("submitTime"))
             verifyNoTimeIsSelected(hour, minute)
             clickPageObject(itemWithResId("clock"))
@@ -86,17 +82,13 @@ class WebControlsTest : TestSetup() {
             clickPageObject(itemContainingText("OK"))
             clickPageObject(itemWithResId("submitTime"))
             verifySelectedTime(hour, minute)
-            clickPageObject(itemWithResId("clock"))
-            clickPageObject(itemContainingText("CLEAR"))
-            clickPageObject(itemWithResId("submitTime"))
-            verifyNoTimeIsSelected(hour, minute)
         }
     }
 
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2316068
     @Test
     fun verifyColorPickerInteractionsTest() {
-        val htmlControlsPage = getHTMLControlsFormAsset(mockWebServer)
+        val htmlControlsPage = mockWebServer.htmlControlsFormAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(htmlControlsPage.url) {
@@ -116,7 +108,7 @@ class WebControlsTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2316070
     @Test
     fun verifyDropdownMenuInteractionsTest() {
-        val htmlControlsPage = getHTMLControlsFormAsset(mockWebServer)
+        val htmlControlsPage = mockWebServer.htmlControlsFormAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(htmlControlsPage.url) {
@@ -130,13 +122,13 @@ class WebControlsTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/2316071
     @Test
     fun verifyEmailLinkTest() {
-        val externalLinksPage = TestAssetHelper.getExternalLinksAsset(mockWebServer)
+        val externalLinksPage = mockWebServer.externalLinksAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(externalLinksPage.url) {
             clickPageObject(itemContainingText("Email link"))
             waitForAppWindowToBeUpdated()
-            clickPageObject(itemWithResIdAndText("android:id/button1", "OPEN"))
+            clickPageObject(itemWithResIdAndText("android:id/button1", "Open"))
             assertNativeAppOpens(Constants.PackageName.GMAIL_APP, emailLink)
         }
     }
@@ -144,13 +136,13 @@ class WebControlsTest : TestSetup() {
     // TestRail link: https://mozilla.testrail.io/index.php?/cases/view/834205
     @Test
     fun verifyTelephoneLinkTest() {
-        val externalLinksPage = TestAssetHelper.getExternalLinksAsset(mockWebServer)
+        val externalLinksPage = mockWebServer.externalLinksAsset
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(externalLinksPage.url) {
             clickPageObject(itemContainingText("Telephone link"))
             waitForAppWindowToBeUpdated()
-            clickPageObject(itemWithResIdAndText("android:id/button1", "OPEN"))
+            clickPageObject(itemWithResIdAndText("android:id/button1", "Open"))
             assertNativeAppOpens(Constants.PackageName.PHONE_APP, phoneLink)
         }
     }

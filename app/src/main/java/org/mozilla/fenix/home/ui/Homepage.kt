@@ -4,8 +4,8 @@
 
 package org.mozilla.fenix.home.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,13 +13,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -61,6 +65,7 @@ import org.mozilla.fenix.home.recentvisits.view.RecentlyVisited
 import org.mozilla.fenix.home.sessioncontrol.CollectionInteractor
 import org.mozilla.fenix.home.sessioncontrol.MessageCardInteractor
 import org.mozilla.fenix.home.setup.ui.SetupChecklist
+import org.mozilla.fenix.home.store.HeaderState
 import org.mozilla.fenix.home.store.HomepageState
 import org.mozilla.fenix.home.store.NimbusMessageState
 import org.mozilla.fenix.home.topsites.TopSiteColors
@@ -71,6 +76,7 @@ import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.theme.Theme
 import org.mozilla.fenix.utils.isLargeScreenSize
 import org.mozilla.fenix.wallpapers.WallpaperState
+import mozilla.components.ui.icons.R as iconsR
 
 /**
  * Top level composable for the homepage.
@@ -78,136 +84,151 @@ import org.mozilla.fenix.wallpapers.WallpaperState
  * @param state State representing the homepage.
  * @param interactor [HomepageInteractor] for interactions with the homepage UI.
  * @param onTopSitesItemBound Invoked during the composition of a top site item.
+ * @param modifier [Modifier] to be applied to the layout.
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
 @Composable
 internal fun Homepage(
     state: HomepageState,
     interactor: HomepageInteractor,
     onTopSitesItemBound: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .semantics {
-                testTagsAsResourceId = true
-                testTag = HOMEPAGE
-            }
-            .pointerInput(state.isSearchInProgress) {
-                if (state.isSearchInProgress) {
-                    awaitPointerEventScope {
-                        interactor.onHomeContentFocusedWhileSearchIsActive()
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .semantics {
+                    testTagsAsResourceId = true
+                    testTag = HOMEPAGE
+                }
+                .pointerInput(state.isSearchInProgress) {
+                    if (state.isSearchInProgress) {
+                        awaitPointerEventScope {
+                            interactor.onHomeContentFocusedWhileSearchIsActive()
+                        }
                     }
                 }
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (state.headerState.showHeader) {
+                HomepageHeader(
+                    wordmarkTextColor = state.headerState.wordmarkTextColor,
+                    privateBrowsingButtonColor = state.headerState.privateBrowsingButtonColor,
+                    browsingMode = state.browsingMode,
+                    browsingModeChanged = interactor::onPrivateModeButtonClicked,
+                )
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            .verticalScroll(scrollState),
-    ) {
-        if (state.showHeader) {
-            HomepageHeader(
-                browsingMode = state.browsingMode,
-                browsingModeChanged = interactor::onPrivateModeButtonClicked,
-            )
-        } else {
-            Spacer(modifier = Modifier.height(40.dp))
-        }
 
-        if (state.firstFrameDrawn) {
-            with(state) {
-                when (this) {
-                    is HomepageState.Private -> {
-                        Box(modifier = Modifier.padding(horizontal = horizontalMargin)) {
+            if (state.firstFrameDrawn) {
+                with(state) {
+                    when (this) {
+                        is HomepageState.Private -> {
                             PrivateBrowsingDescription(
                                 onLearnMoreClick = interactor::onLearnMoreClicked,
                             )
                         }
-                    }
 
-                    is HomepageState.Normal -> {
-                        nimbusMessage?.let {
-                            NimbusMessageCardSection(
-                                nimbusMessage = nimbusMessage,
-                                interactor = interactor,
-                            )
-                        }
+                        is HomepageState.Normal -> {
+                            nimbusMessage?.let {
+                                NimbusMessageCardSection(
+                                    nimbusMessage = nimbusMessage,
+                                    interactor = interactor,
+                                )
+                            }
 
-                        if (showTopSites) {
-                            TopSitesSection(
-                                topSites = topSites,
-                                topSiteColors = topSiteColors,
-                                interactor = interactor,
-                                onTopSitesItemBound = onTopSitesItemBound,
-                            )
-                        }
+                            if (showTopSites) {
+                                TopSitesSection(
+                                    topSites = topSites,
+                                    topSiteColors = topSiteColors,
+                                    interactor = interactor,
+                                    onTopSitesItemBound = onTopSitesItemBound,
+                                )
+                            }
 
-                        MaybeAddSetupChecklist(setupChecklistState, interactor)
+                            MaybeAddSetupChecklist(setupChecklistState, interactor)
 
-                        if (showRecentTabs) {
-                            RecentTabsSection(
-                                interactor = interactor,
-                                cardBackgroundColor = cardBackgroundColor,
-                                recentTabs = recentTabs,
-                            )
+                            if (showRecentTabs) {
+                                RecentTabsSection(
+                                    interactor = interactor,
+                                    cardBackgroundColor = cardBackgroundColor,
+                                    recentTabs = recentTabs,
+                                )
 
-                            if (showRecentSyncedTab) {
-                                Box(
-                                    modifier = Modifier.padding(
-                                        start = horizontalMargin,
-                                        end = horizontalMargin,
-                                        top = verticalMargin,
-                                    ),
-                                ) {
-                                    RecentSyncedTab(
-                                        tab = syncedTab,
-                                        backgroundColor = cardBackgroundColor,
-                                        buttonBackgroundColor = if (syncedTab != null) {
-                                            buttonBackgroundColor
-                                        } else {
-                                            FirefoxTheme.colors.layer3
-                                        },
-                                        buttonTextColor = buttonTextColor,
-                                        onRecentSyncedTabClick = interactor::onRecentSyncedTabClicked,
-                                        onSeeAllSyncedTabsButtonClick = interactor::onSyncedTabShowAllClicked,
-                                        onRemoveSyncedTab = interactor::onRemovedRecentSyncedTab,
-                                    )
+                                if (showRecentSyncedTab) {
+                                    Box(
+                                        modifier = Modifier.padding(
+                                            start = horizontalMargin,
+                                            end = horizontalMargin,
+                                            top = verticalMargin,
+                                        ),
+                                    ) {
+                                        RecentSyncedTab(
+                                            tab = syncedTab,
+                                            backgroundColor = cardBackgroundColor,
+                                            buttonBackgroundColor = if (syncedTab != null) {
+                                                buttonBackgroundColor
+                                            } else {
+                                                MaterialTheme.colorScheme.surfaceContainerHighest
+                                            },
+                                            buttonTextColor = buttonTextColor,
+                                            onRecentSyncedTabClick = interactor::onRecentSyncedTabClicked,
+                                            onSeeAllSyncedTabsButtonClick = interactor::onSyncedTabShowAllClicked,
+                                            onRemoveSyncedTab = interactor::onRemovedRecentSyncedTab,
+                                        )
+                                    }
                                 }
                             }
+
+                            if (showBookmarks) {
+                                BookmarksSection(
+                                    bookmarks = bookmarks,
+                                    cardBackgroundColor = cardBackgroundColor,
+                                    interactor = interactor,
+                                )
+                            }
+
+                            if (showRecentlyVisited) {
+                                RecentlyVisitedSection(
+                                    recentVisits = recentlyVisited,
+                                    cardBackgroundColor = cardBackgroundColor,
+                                    interactor = interactor,
+                                )
+                            }
+
+                            if (showCollections) {
+                                CollectionsSection(
+                                    collectionsState = collectionsState,
+                                    interactor = interactor,
+                                )
+                            }
+
+                            if (showPocketStories) {
+                                Spacer(
+                                    modifier = if (isMinimalLayout()) {
+                                        Modifier.weight(1f)
+                                    } else {
+                                        Modifier.padding(top = 72.dp)
+                                    },
+                                )
+
+                                PocketSection(
+                                    state = pocketState,
+                                    cardBackgroundColor = cardBackgroundColor,
+                                    interactor = interactor,
+                                )
+                            }
+
+                            Spacer(Modifier.height(bottomPadding.dp))
                         }
-
-                        if (showBookmarks) {
-                            BookmarksSection(
-                                bookmarks = bookmarks,
-                                cardBackgroundColor = cardBackgroundColor,
-                                interactor = interactor,
-                            )
-                        }
-
-                        if (showRecentlyVisited) {
-                            RecentlyVisitedSection(
-                                recentVisits = recentlyVisited,
-                                cardBackgroundColor = cardBackgroundColor,
-                                interactor = interactor,
-                            )
-                        }
-
-                        if (showCollections) {
-                            CollectionsSection(
-                                collectionsState = collectionsState,
-                                interactor = interactor,
-                            )
-                        }
-
-                        if (showPocketStories) {
-                            Spacer(Modifier.padding(top = 72.dp))
-
-                            PocketSection(
-                                state = pocketState,
-                                cardBackgroundColor = cardBackgroundColor,
-                                interactor = interactor,
-                            )
-                        }
-
-                        Spacer(Modifier.height(bottomSpacerHeight))
                     }
                 }
             }
@@ -255,7 +276,7 @@ internal fun TopSitesSection(
         headerText = stringResource(R.string.homepage_shortcuts_title),
         modifier = Modifier.padding(horizontal = horizontalMargin),
         description = stringResource(R.string.homepage_shortcuts_show_all_content_description),
-        onShowAllClick = interactor::onShowAllTopSitesClicked,
+        onButtonClick = interactor::onShowAllTopSitesClicked,
     )
 
     Spacer(Modifier.height(16.dp))
@@ -280,7 +301,7 @@ private fun RecentTabsSection(
         HomeSectionHeader(
             headerText = stringResource(R.string.recent_tabs_header),
             description = stringResource(R.string.recent_tabs_show_all_content_description_2),
-            onShowAllClick = interactor::onRecentTabShowAllClicked,
+            onButtonClick = interactor::onRecentTabShowAllClicked,
         )
 
         Spacer(Modifier.height(16.dp))
@@ -315,7 +336,7 @@ private fun BookmarksSection(
         headerText = stringResource(R.string.home_bookmarks_title),
         modifier = Modifier.padding(horizontal = horizontalMargin),
         description = stringResource(R.string.home_bookmarks_show_all_content_description),
-        onShowAllClick = interactor::onShowAllBookmarksClicked,
+        onButtonClick = interactor::onShowAllBookmarksClicked,
     )
 
     Spacer(Modifier.height(16.dp))
@@ -345,7 +366,7 @@ private fun RecentlyVisitedSection(
         HomeSectionHeader(
             headerText = stringResource(R.string.history_metadata_header_2),
             description = stringResource(R.string.past_explorations_show_all_content_description_2),
-            onShowAllClick = interactor::onHistoryShowAllClicked,
+            onButtonClick = interactor::onHistoryShowAllClicked,
         )
     }
 
@@ -438,13 +459,9 @@ private fun CollectionsSection(
 @PreviewLightDark
 private fun HomepagePreview() {
     FirefoxTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = FirefoxTheme.colors.layer1),
-        ) {
+        Surface {
             Homepage(
-                HomepageState.Normal(
+                state = HomepageState.Normal(
                     nimbusMessage = FakeHomepagePreview.nimbusMessageState(),
                     topSites = FakeHomepagePreview.topSites(),
                     recentTabs = FakeHomepagePreview.recentTabs(),
@@ -460,7 +477,15 @@ private fun HomepagePreview() {
                     showRecentlyVisited = true,
                     showPocketStories = true,
                     showCollections = true,
-                    showHeader = false,
+                    headerState = HeaderState(
+                        showHeader = false,
+                        wordmarkTextColor = null,
+                        privateBrowsingButtonColor = colorResource(
+                            getAttr(
+                                iconsR.attr.mozac_ic_private_mode_circle_fill_icon_color,
+                            ),
+                        ),
+                    ),
                     searchBarVisible = true,
                     searchBarEnabled = false,
                     firstFrameDrawn = true,
@@ -469,11 +494,12 @@ private fun HomepagePreview() {
                     cardBackgroundColor = WallpaperState.default.cardBackgroundColor,
                     buttonTextColor = WallpaperState.default.buttonTextColor,
                     buttonBackgroundColor = WallpaperState.default.buttonBackgroundColor,
-                    bottomSpacerHeight = 188.dp,
                     isSearchInProgress = false,
+                    bottomPadding = 68,
                 ),
                 interactor = FakeHomepagePreview.homepageInteractor,
                 onTopSitesItemBound = {},
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
@@ -483,38 +509,99 @@ private fun HomepagePreview() {
 @PreviewLightDark
 private fun HomepagePreviewCollections() {
     FirefoxTheme {
-        Homepage(
-            HomepageState.Normal(
-                nimbusMessage = null,
-                topSites = FakeHomepagePreview.topSites(),
-                recentTabs = FakeHomepagePreview.recentTabs(),
-                syncedTab = FakeHomepagePreview.recentSyncedTab(),
-                bookmarks = FakeHomepagePreview.bookmarks(),
-                recentlyVisited = FakeHomepagePreview.recentHistory(),
-                collectionsState = FakeHomepagePreview.collectionState(),
-                pocketState = FakeHomepagePreview.pocketState(),
-                showTopSites = false,
-                showRecentTabs = false,
-                showRecentSyncedTab = false,
-                showBookmarks = false,
-                showRecentlyVisited = true,
-                showPocketStories = true,
-                showCollections = true,
-                showHeader = false,
-                searchBarVisible = true,
-                searchBarEnabled = false,
-                firstFrameDrawn = true,
-                setupChecklistState = null,
-                topSiteColors = TopSiteColors.colors(),
-                cardBackgroundColor = WallpaperState.default.cardBackgroundColor,
-                buttonTextColor = WallpaperState.default.buttonTextColor,
-                buttonBackgroundColor = WallpaperState.default.buttonBackgroundColor,
-                bottomSpacerHeight = 188.dp,
-                isSearchInProgress = false,
-            ),
-            interactor = FakeHomepagePreview.homepageInteractor,
-            onTopSitesItemBound = {},
-        )
+        Surface {
+            Homepage(
+                state = HomepageState.Normal(
+                    nimbusMessage = null,
+                    topSites = FakeHomepagePreview.topSites(),
+                    recentTabs = FakeHomepagePreview.recentTabs(),
+                    syncedTab = FakeHomepagePreview.recentSyncedTab(),
+                    bookmarks = FakeHomepagePreview.bookmarks(),
+                    recentlyVisited = FakeHomepagePreview.recentHistory(),
+                    collectionsState = FakeHomepagePreview.collectionState(),
+                    pocketState = FakeHomepagePreview.pocketState(),
+                    showTopSites = false,
+                    showRecentTabs = false,
+                    showRecentSyncedTab = false,
+                    showBookmarks = false,
+                    showRecentlyVisited = true,
+                    showPocketStories = true,
+                    showCollections = true,
+                    headerState = HeaderState(
+                        showHeader = false,
+                        wordmarkTextColor = null,
+                        privateBrowsingButtonColor = colorResource(
+                            getAttr(
+                                iconsR.attr.mozac_ic_private_mode_circle_fill_icon_color,
+                            ),
+                        ),
+                    ),
+                    searchBarVisible = true,
+                    searchBarEnabled = false,
+                    firstFrameDrawn = true,
+                    setupChecklistState = null,
+                    topSiteColors = TopSiteColors.colors(),
+                    cardBackgroundColor = WallpaperState.default.cardBackgroundColor,
+                    buttonTextColor = WallpaperState.default.buttonTextColor,
+                    buttonBackgroundColor = WallpaperState.default.buttonBackgroundColor,
+                    isSearchInProgress = false,
+                    bottomPadding = 68,
+                ),
+                interactor = FakeHomepagePreview.homepageInteractor,
+                onTopSitesItemBound = {},
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+@PreviewLightDark
+private fun MinimalHomepagePreview() {
+    FirefoxTheme {
+        Surface {
+            Homepage(
+                state = HomepageState.Normal(
+                    nimbusMessage = null,
+                    topSites = FakeHomepagePreview.topSites(),
+                    recentTabs = FakeHomepagePreview.recentTabs(),
+                    syncedTab = FakeHomepagePreview.recentSyncedTab(),
+                    bookmarks = FakeHomepagePreview.bookmarks(),
+                    recentlyVisited = FakeHomepagePreview.recentHistory(),
+                    collectionsState = FakeHomepagePreview.collectionState(),
+                    pocketState = FakeHomepagePreview.pocketState(),
+                    showTopSites = true,
+                    showRecentTabs = false,
+                    showRecentSyncedTab = false,
+                    showBookmarks = false,
+                    showRecentlyVisited = false,
+                    showPocketStories = true,
+                    showCollections = false,
+                    HeaderState(
+                        showHeader = false,
+                        wordmarkTextColor = null,
+                        privateBrowsingButtonColor = colorResource(
+                            getAttr(
+                                iconsR.attr.mozac_ic_private_mode_circle_fill_icon_color,
+                            ),
+                        ),
+                    ),
+                    searchBarVisible = false,
+                    searchBarEnabled = false,
+                    firstFrameDrawn = true,
+                    setupChecklistState = null,
+                    topSiteColors = TopSiteColors.colors(),
+                    cardBackgroundColor = WallpaperState.default.cardBackgroundColor,
+                    buttonTextColor = WallpaperState.default.buttonTextColor,
+                    buttonBackgroundColor = WallpaperState.default.buttonBackgroundColor,
+                    isSearchInProgress = false,
+                    bottomPadding = 68,
+                ),
+                interactor = FakeHomepagePreview.homepageInteractor,
+                onTopSitesItemBound = {},
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
@@ -522,22 +609,24 @@ private fun HomepagePreviewCollections() {
 @Preview
 private fun PrivateHomepagePreview() {
     FirefoxTheme(theme = Theme.Private) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = FirefoxTheme.colors.layer1),
-        ) {
-            Homepage(
-                HomepageState.Private(
+        Homepage(
+            state = HomepageState.Private(
+                headerState = HeaderState(
                     showHeader = false,
-                    firstFrameDrawn = true,
-                    isSearchInProgress = false,
-                    bottomSpacerHeight = 188.dp,
+                    wordmarkTextColor = null,
+                    privateBrowsingButtonColor = colorResource(
+                        getAttr(
+                            iconsR.attr.mozac_ic_private_mode_circle_fill_icon_color,
+                        ),
+                    ),
                 ),
-                interactor = FakeHomepagePreview.homepageInteractor,
-                onTopSitesItemBound = {},
-            )
-        }
+                firstFrameDrawn = true,
+                isSearchInProgress = false,
+            ),
+            interactor = FakeHomepagePreview.homepageInteractor,
+            onTopSitesItemBound = {},
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 

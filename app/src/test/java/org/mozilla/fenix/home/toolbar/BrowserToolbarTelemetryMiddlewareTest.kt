@@ -7,15 +7,13 @@ package org.mozilla.fenix.home.toolbar
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarInteraction.BrowserToolbarEvent.Source
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.GleanMetrics.Events
+import org.mozilla.fenix.GleanMetrics.Toolbar
 import org.mozilla.fenix.helpers.FenixGleanTestRule
 import org.mozilla.fenix.home.toolbar.BrowserToolbarTelemetryMiddleware.ToolbarActionRecord
 import org.mozilla.fenix.home.toolbar.DisplayActions.MenuClicked
@@ -23,6 +21,8 @@ import org.mozilla.fenix.home.toolbar.TabCounterInteractions.AddNewPrivateTab
 import org.mozilla.fenix.home.toolbar.TabCounterInteractions.AddNewTab
 import org.mozilla.fenix.home.toolbar.TabCounterInteractions.TabCounterClicked
 import org.mozilla.fenix.home.toolbar.TabCounterInteractions.TabCounterLongClicked
+import org.mozilla.fenix.telemetry.SOURCE_ADDRESS_BAR
+import org.mozilla.fenix.telemetry.SOURCE_NAVIGATION_BAR
 
 @RunWith(AndroidJUnit4::class)
 class BrowserToolbarTelemetryMiddlewareTest {
@@ -30,67 +30,47 @@ class BrowserToolbarTelemetryMiddlewareTest {
     val gleanRule = FenixGleanTestRule(testContext)
 
     @Test
-    fun `WHEN menu button is clicked THEN record telemetry based on addressBar or navbar source`() {
-        assertNull(Events.browserToolbarAction.testGetValue())
+    fun `WHEN menu button is clicked THEN record telemetry based on browser end or navbar source`() {
+        buildStore.dispatch(MenuClicked(Source.AddressBar.BrowserEnd))
+        assertTelemetryRecorded(Source.AddressBar.BrowserEnd, item = ToolbarActionRecord.MenuClicked.action)
 
-        buildStore.dispatch(MenuClicked(Source.AddressBar)).joinBlocking()
-        assertTelemetryRecorded(Source.AddressBar, item = ToolbarActionRecord.MenuClicked.action)
-
-        assertNull(Events.browserNavbarAction.testGetValue())
-
-        buildStore.dispatch(MenuClicked(Source.NavigationBar)).joinBlocking()
+        buildStore.dispatch(MenuClicked(Source.NavigationBar))
         assertTelemetryRecorded(Source.NavigationBar, item = ToolbarActionRecord.MenuClicked.action)
     }
 
     @Test
-    fun `WHEN tab counter is clicked THEN record telemetry based on addressBar or navbar source`() {
-        assertNull(Events.browserToolbarAction.testGetValue())
+    fun `WHEN tab counter is clicked THEN record telemetry based on browser end or navbar source`() {
+        buildStore.dispatch(TabCounterClicked(Source.AddressBar.BrowserEnd))
+        assertTelemetryRecorded(Source.AddressBar.BrowserEnd, item = ToolbarActionRecord.TabCounterClicked.action)
 
-        buildStore.dispatch(TabCounterClicked(Source.AddressBar)).joinBlocking()
-        assertTelemetryRecorded(Source.AddressBar, item = ToolbarActionRecord.TabCounterClicked.action)
-
-        assertNull(Events.browserNavbarAction.testGetValue())
-
-        buildStore.dispatch(TabCounterClicked(Source.NavigationBar)).joinBlocking()
+        buildStore.dispatch(TabCounterClicked(Source.NavigationBar))
         assertTelemetryRecorded(Source.NavigationBar, item = ToolbarActionRecord.TabCounterClicked.action)
     }
 
     @Test
-    fun `WHEN tab counter is long clicked THEN record telemetry based on addressBar or navbar source`() {
-        assertNull(Events.browserToolbarAction.testGetValue())
+    fun `WHEN tab counter is long clicked THEN record telemetry based on browser end or navbar source`() {
+        buildStore.dispatch(TabCounterLongClicked(Source.AddressBar.BrowserEnd))
+        assertTelemetryRecorded(Source.AddressBar.BrowserEnd, item = ToolbarActionRecord.TabCounterLongClicked.action)
 
-        buildStore.dispatch(TabCounterLongClicked(Source.AddressBar)).joinBlocking()
-        assertTelemetryRecorded(Source.AddressBar, item = ToolbarActionRecord.TabCounterLongClicked.action)
-
-        assertNull(Events.browserNavbarAction.testGetValue())
-
-        buildStore.dispatch(TabCounterLongClicked(Source.NavigationBar)).joinBlocking()
+        buildStore.dispatch(TabCounterLongClicked(Source.NavigationBar))
         assertTelemetryRecorded(Source.NavigationBar, item = ToolbarActionRecord.TabCounterLongClicked.action)
     }
 
     @Test
-    fun `WHEN adding a new tab THEN record telemetry based on addressBar or navbar source`() {
-        assertNull(Events.browserToolbarAction.testGetValue())
+    fun `WHEN adding a new tab THEN record telemetry based on browser end or navbar source`() {
+        buildStore.dispatch(AddNewTab(Source.AddressBar.BrowserEnd))
+        assertTelemetryRecorded(Source.AddressBar.BrowserEnd, item = ToolbarActionRecord.AddNewTab.action)
 
-        buildStore.dispatch(AddNewTab(Source.AddressBar)).joinBlocking()
-        assertTelemetryRecorded(Source.AddressBar, item = ToolbarActionRecord.AddNewTab.action)
-
-        assertNull(Events.browserNavbarAction.testGetValue())
-
-        buildStore.dispatch(AddNewTab(Source.NavigationBar)).joinBlocking()
+        buildStore.dispatch(AddNewTab(Source.NavigationBar))
         assertTelemetryRecorded(Source.NavigationBar, item = ToolbarActionRecord.AddNewTab.action)
     }
 
     @Test
-    fun `WHEN adding a new private tab THEN record telemetry based on addressBar or navbar source`() {
-        assertNull(Events.browserToolbarAction.testGetValue())
+    fun `WHEN adding a new private tab THEN record telemetry based on browser end or navbar source`() {
+        buildStore.dispatch(AddNewPrivateTab(Source.AddressBar.BrowserEnd))
+        assertTelemetryRecorded(Source.AddressBar.BrowserEnd, item = ToolbarActionRecord.AddNewPrivateTab.action)
 
-        buildStore.dispatch(AddNewPrivateTab(Source.AddressBar)).joinBlocking()
-        assertTelemetryRecorded(Source.AddressBar, item = ToolbarActionRecord.AddNewPrivateTab.action)
-
-        assertNull(Events.browserNavbarAction.testGetValue())
-
-        buildStore.dispatch(AddNewPrivateTab(Source.NavigationBar)).joinBlocking()
+        buildStore.dispatch(AddNewPrivateTab(Source.NavigationBar))
         assertTelemetryRecorded(Source.NavigationBar, item = ToolbarActionRecord.AddNewPrivateTab.action)
     }
 
@@ -98,16 +78,18 @@ class BrowserToolbarTelemetryMiddlewareTest {
         source: Source,
         item: String,
     ) {
-        val event = if (source == Source.AddressBar) {
-            Events.browserToolbarAction
-        } else {
-            Events.browserNavbarAction
+        val values = Toolbar.buttonTapped.testGetValue()
+        assertNotNull(values)
+        val last = values!!.last()
+        val expectedSource = when (source) {
+            is Source.AddressBar, Source.Unknown -> SOURCE_ADDRESS_BAR
+            Source.NavigationBar -> SOURCE_NAVIGATION_BAR
         }
-        assertNotNull(event.testGetValue())
-
-        val snapshot = event.testGetValue()!!
-        assertEquals(1, snapshot.size)
-        assertEquals(item, snapshot.single().extra?.getValue("item"))
+        assertEquals(item, last.extra?.get("item"))
+        assertEquals(expectedSource, last.extra?.get("source"))
+        if (source is Source.AddressBar) {
+            assertEquals(source.telemetryName(), last.extra?.get("extra"))
+        }
     }
 
     private val buildStore = BrowserToolbarStore(

@@ -7,26 +7,36 @@ package org.mozilla.fenix.iconpicker.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,21 +44,34 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import mozilla.components.compose.base.Divider
+import kotlinx.coroutines.launch
 import mozilla.components.compose.base.annotation.FlexibleWindowLightDarkPreview
 import mozilla.components.compose.base.button.TextButton
+import mozilla.components.compose.base.snackbar.Snackbar
+import mozilla.components.compose.base.snackbar.displaySnackbar
+import mozilla.components.lib.state.ext.observeAsState
 import org.mozilla.fenix.R
 import org.mozilla.fenix.compose.button.RadioButton
 import org.mozilla.fenix.iconpicker.AppIcon
+import org.mozilla.fenix.iconpicker.AppIconSnackbarState
+import org.mozilla.fenix.iconpicker.AppIconState
+import org.mozilla.fenix.iconpicker.AppIconStore
+import org.mozilla.fenix.iconpicker.AppIconWarningDialog
 import org.mozilla.fenix.iconpicker.DefaultAppIconRepository
+import org.mozilla.fenix.iconpicker.DefaultPackageManagerWrapper
 import org.mozilla.fenix.iconpicker.IconBackground
 import org.mozilla.fenix.iconpicker.IconGroupTitle
+import org.mozilla.fenix.iconpicker.SystemAction
+import org.mozilla.fenix.iconpicker.UserAction
 import org.mozilla.fenix.theme.FirefoxTheme
-import org.mozilla.fenix.utils.Settings
+import org.mozilla.fenix.theme.Theme
 
 private val ListItemHeight = 56.dp
 private val AppIconSize = 40.dp
@@ -62,64 +85,124 @@ private val GroupSpacerHeight = 8.dp
 /**
  * A composable that displays a list of app icon options.
  *
- * @param currentAppIcon The currently selected app icon alias.
- * @param groupedIconOptions Icons are displayed in sections under their respective titles.
- * @param onAppIconSelected A callback invoked when the user has confirmed an alternative icon to be
- * applied (they get informed about the required restart providing an opportunity to back out).
+ * @param store A store for managing the app icon selection screen state.
+ * @param shortcutRemovalWarning Whether the user should be shown a warning that their Home screen
+ * shortcuts will be removed when changing the app icon.
  */
 @Composable
 fun AppIconSelection(
-    currentAppIcon: AppIcon,
-    groupedIconOptions: Map<IconGroupTitle, List<AppIcon>>,
-    onAppIconSelected: (AppIcon) -> Unit,
+    store: AppIconStore,
+    shortcutRemovalWarning: () -> Boolean,
 ) {
-    var currentAppIcon by remember { mutableStateOf(currentAppIcon) }
-    var selectedAppIcon by remember { mutableStateOf<AppIcon?>(null) }
+    val state by store.observeAsState(store.state) { it }
+    val selectedIcon = state.userSelectedAppIcon ?: state.currentAppIcon
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LazyColumn(
-        modifier = Modifier.background(color = FirefoxTheme.colors.layer1),
-    ) {
-        groupedIconOptions.forEach { (header, icons) ->
-            item(contentType = { header::class }) {
-                AppIconGroupHeader(header)
-            }
-
-            items(
-                items = icons,
-                contentType = { item -> item::class },
-            ) { icon ->
-                val iconSelected = icon == currentAppIcon
-
-                AppIconOption(
-                    appIcon = icon,
-                    selected = iconSelected,
-                    onClick = {
-                        if (!iconSelected) {
-                            selectedAppIcon = icon
-                        }
+    val snackbarState = state.snackbarState
+    val errorSnackbarMessage = stringResource(R.string.shortcuts_update_error)
+    LaunchedEffect(snackbarState) {
+        when (snackbarState) {
+            AppIconSnackbarState.None -> return@LaunchedEffect
+            is AppIconSnackbarState.ApplyingNewIconError -> scope.launch {
+                store.dispatch(
+                    SystemAction.SnackbarShown(
+                        oldIcon = snackbarState.oldIcon,
+                        newIcon = snackbarState.newIcon,
+                    ),
+                )
+                snackbarHostState.displaySnackbar(
+                    message = errorSnackbarMessage,
+                    onDismissPerformed = {
+                        store.dispatch(SystemAction.SnackbarDismissed)
                     },
                 )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(GroupSpacerHeight))
-
-                Divider(color = FirefoxTheme.colors.borderPrimary)
             }
         }
     }
 
-    selectedAppIcon?.let {
-        RestartWarningDialog(
-            onConfirm = {
-                currentAppIcon = it
-                onAppIconSelected(it)
-                selectedAppIcon = null
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { snackbarData ->
+                    Snackbar(snackbarData = snackbarData)
+                },
+                modifier = Modifier.imePadding(),
+            )
+        },
+        contentWindowInsets = WindowInsets(), // empty insets, activity toolbar is handled by the host fragment
+    ) { paddingValues ->
+        AppIconList(
+            paddingValues = paddingValues,
+            selectedIcon = selectedIcon,
+            groupedIcons = state.groupedIconOptions,
+            onIconSelected = { icon -> store.dispatch(UserAction.Selected(icon)) },
+        )
+    }
+
+    when (val warning = state.warningDialogState) {
+        is AppIconWarningDialog.Presenting -> RestartWarningDialog(
+            shortcutRemovalWarning = shortcutRemovalWarning,
+            onConfirmClicked = {
+                store.dispatch(
+                    UserAction.Confirmed(
+                        oldIcon = state.currentAppIcon,
+                        newIcon = warning.newIcon,
+                    ),
+                )
             },
-            onDismiss = {
-                selectedAppIcon = null
+            onDismissClicked = {
+                store.dispatch(UserAction.Dismissed)
+            },
+            onDismissed = {
+                store.dispatch(SystemAction.DialogDismissed)
             },
         )
+        else -> Unit
+    }
+}
+
+@Composable
+private fun AppIconList(
+    paddingValues: PaddingValues,
+    selectedIcon: AppIcon,
+    groupedIcons: Map<IconGroupTitle, List<AppIcon>>,
+    onIconSelected: (AppIcon) -> Unit,
+) {
+    Surface {
+        LazyColumn(
+            modifier = Modifier.padding(paddingValues),
+        ) {
+            groupedIcons.forEach { (header, icons) ->
+                item(contentType = { header::class }) {
+                    AppIconGroupHeader(header)
+                }
+
+                items(
+                    items = icons,
+                    contentType = { item -> item::class },
+                ) { icon ->
+                    val iconSelected = icon == selectedIcon
+
+                    AppIconOption(
+                        appIcon = icon,
+                        selected = iconSelected,
+                        onClick = {
+                            if (!iconSelected) {
+                                onIconSelected(icon)
+                            }
+                        },
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(GroupSpacerHeight))
+
+                    HorizontalDivider()
+                }
+            }
+        }
     }
 }
 
@@ -133,7 +216,7 @@ private fun AppIconGroupHeader(title: IconGroupTitle) {
             .wrapContentHeight(Alignment.CenterVertically)
             .semantics { heading() },
         style = FirefoxTheme.typography.headline8,
-        color = FirefoxTheme.colors.textAccent,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -143,30 +226,46 @@ private fun AppIconOption(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(ListItemHeight)
-            .clickable { onClick() },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = {
-                onClick()
-            },
-        )
+    Surface {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ListItemHeight)
+                .selectable(
+                    selected = selected,
+                    role = Role.RadioButton,
+                    onClick = { onClick() },
+                )
+                .semantics(mergeDescendants = true) {},
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = {
+                    onClick()
+                },
+                modifier = Modifier.clearAndSetSemantics {},
+            )
 
-        AppIcon(appIcon)
+            AppIcon(appIcon)
 
-        Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-        Text(
-            text = stringResource(appIcon.titleId),
-            modifier = Modifier.weight(1f),
-            style = FirefoxTheme.typography.subtitle1,
-            color = FirefoxTheme.colors.textPrimary,
-        )
+            Column {
+                Text(
+                    text = stringResource(appIcon.titleId),
+                    style = FirefoxTheme.typography.body1,
+                )
+
+                appIcon.subtitleId?.let {
+                    Text(
+                        text = stringResource(it),
+                        style = FirefoxTheme.typography.body2,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -191,7 +290,7 @@ fun AppIcon(
             .size(iconSize)
             .border(
                 width = borderWidth,
-                color = FirefoxTheme.colors.borderPrimary,
+                color = MaterialTheme.colorScheme.outlineVariant,
                 shape = roundedShape,
             )
             .padding(backgroundPadding)
@@ -227,37 +326,42 @@ fun AppIcon(
 
 @Composable
 private fun RestartWarningDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
+    shortcutRemovalWarning: () -> Boolean,
+    onConfirmClicked: () -> Unit,
+    onDismissClicked: () -> Unit,
+    onDismissed: () -> Unit,
 ) {
     AlertDialog(
         title = {
             Text(
                 text = stringResource(R.string.restart_warning_dialog_title),
-                color = FirefoxTheme.colors.textPrimary,
-                style = FirefoxTheme.typography.headline7,
+                style = FirefoxTheme.typography.headline5,
             )
-                },
+        },
         text = {
             Text(
-                text = stringResource(R.string.restart_warning_dialog_body),
-                color = FirefoxTheme.colors.textPrimary,
+                text = stringResource(
+                    id = if (shortcutRemovalWarning()) {
+                        R.string.restart_and_shortcuts_removal_warning_dialog_body
+                    } else {
+                        R.string.restart_warning_dialog_body_2
+                    },
+                    stringResource(R.string.app_name),
+                ),
                 style = FirefoxTheme.typography.body2,
             )
         },
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = { onDismissed() },
         confirmButton = {
             TextButton(
-                text = stringResource(id = R.string.restart_warning_dialog_button_positive),
-                upperCaseText = false,
-                onClick = { onConfirm() },
+                text = stringResource(id = R.string.restart_warning_dialog_button_positive_2),
+                onClick = { onConfirmClicked() },
             )
         },
         dismissButton = {
             TextButton(
                 text = stringResource(id = R.string.restart_warning_dialog_button_negative),
-                upperCaseText = false,
-                onClick = { onDismiss() },
+                onClick = { onDismissClicked() },
             )
         },
     )
@@ -268,9 +372,17 @@ private fun RestartWarningDialog(
 private fun AppIconSelectionPreview() {
     FirefoxTheme {
         AppIconSelection(
-            currentAppIcon = AppIcon.AppDefault,
-            groupedIconOptions = DefaultAppIconRepository(Settings(LocalContext.current)).groupedAppIcons,
-            onAppIconSelected = {},
+            store = AppIconStore(
+                initialState = AppIconState(
+                    currentAppIcon = AppIcon.AppDefault,
+                    userSelectedAppIcon = null,
+                    groupedIconOptions = DefaultAppIconRepository(
+                        packageManager = DefaultPackageManagerWrapper(LocalContext.current.packageManager),
+                        packageName = LocalContext.current.packageName,
+                    ).groupedAppIcons,
+                ),
+            ),
+            shortcutRemovalWarning = { false },
         )
     }
 }
@@ -283,13 +395,78 @@ private fun AppIconOptionPreview() {
     }
 }
 
+@Preview
+@Composable
+private fun AppIconOptionPrivatePreview() {
+    FirefoxTheme(theme = Theme.Private) {
+        AppIconOption(AppIcon.AppDefault, false) {}
+    }
+}
+
+@FlexibleWindowLightDarkPreview
+@Composable
+private fun AppIconOptionWithSubtitlePreview() {
+    FirefoxTheme {
+        AppIconOption(AppIcon.AppMomo, false) {}
+    }
+}
+
+@Preview
+@Composable
+private fun AppIconOptionWithSubtitlePrivatePreview() {
+    FirefoxTheme(theme = Theme.Private) {
+        AppIconOption(AppIcon.AppMomo, false) {}
+    }
+}
+
 @FlexibleWindowLightDarkPreview
 @Composable
 private fun RestartWarningDialogPreview() {
     FirefoxTheme {
         RestartWarningDialog(
-            onConfirm = {},
-            onDismiss = {},
+            shortcutRemovalWarning = { false },
+            onConfirmClicked = {},
+            onDismissClicked = {},
+            onDismissed = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RestartWarningDialogPrivatePreview() {
+    FirefoxTheme(theme = Theme.Private) {
+        RestartWarningDialog(
+            shortcutRemovalWarning = { false },
+            onConfirmClicked = {},
+            onDismissClicked = {},
+            onDismissed = {},
+        )
+    }
+}
+
+@FlexibleWindowLightDarkPreview
+@Composable
+private fun ShortcutRemovalWarningDialogPreview() {
+    FirefoxTheme {
+        RestartWarningDialog(
+            shortcutRemovalWarning = { true },
+            onConfirmClicked = {},
+            onDismissClicked = {},
+            onDismissed = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ShortcutRemovalWarningDialogPrivatePreview() {
+    FirefoxTheme(theme = Theme.Private) {
+        RestartWarningDialog(
+            shortcutRemovalWarning = { true },
+            onConfirmClicked = {},
+            onDismissClicked = {},
+            onDismissed = {},
         )
     }
 }

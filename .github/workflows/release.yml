@@ -126,17 +126,6 @@ jobs:
           asset_name: ${{ github.event.ref }}-browser-armeabi-v7a-forkRelease.apk
           asset_content_type: application/vnd.android.package-archive
 
-      - name: Upload x86 apk
-        if: "contains(toJSON(github.event.ref_type), 'tag') && contains(toJSON(github.event.ref), 'iceraven')"
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: gradle/build/app/outputs/apk/fenix/forkRelease/app-fenix-x86-forkRelease.apk
-          asset_name: ${{ github.event.ref }}-browser-x86-forkRelease.apk
-          asset_content_type: application/vnd.android.package-archive
-
       - name: Upload x86_64 apk
         if: "contains(toJSON(github.event.ref_type), 'tag') && contains(toJSON(github.event.ref), 'iceraven')"
         uses: actions/upload-release-asset@v1

@@ -8,17 +8,17 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
 import androidx.annotation.VisibleForTesting
 import mozilla.components.feature.intent.ext.sanitize
 import mozilla.components.feature.intent.processing.IntentProcessor
+import mozilla.components.feature.intent.processing.TabIntentProcessor.Companion.EXTRA_APP_LINK_LAUNCH_TYPE
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.utils.EXTRA_ACTIVITY_REFERRER_CATEGORY
 import mozilla.components.support.utils.EXTRA_ACTIVITY_REFERRER_PACKAGE
 import mozilla.components.support.utils.INTENT_TYPE_PDF
-import mozilla.components.support.utils.ext.getApplicationInfoCompat
+import mozilla.components.support.utils.ext.packageManagerCompatHelper
 import mozilla.components.support.utils.toSafeIntent
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.HomeActivity.Companion.PRIVATE_BROWSING_MODE
@@ -43,8 +43,17 @@ class IntentReceiverActivity : Activity() {
         // DO NOT MOVE ANYTHING ABOVE THIS getProfilerTime CALL.
         val startTimeProfiler = components.core.engine.profiler?.getProfilerTime()
 
+        // DO NOT MOVE the app link intent launch type setting below the super.onCreate call
+        // as it impacts the activity lifecycle observer and causes false launch type detection.
+        // e.g. COLD launch is interpreted as WARM due to [Activity.onActivityCreated] being called
+        // earlier.
+        if (intent.dataString != null) { // data is null when there's no URI to load, e.g. Search widget.
+            val type = components.appLinkIntentLaunchTypeProvider.getExternalIntentLaunchType(HomeActivity::class.java)
+            intent.putExtra(EXTRA_APP_LINK_LAUNCH_TYPE, type)
+        }
+
         // StrictMode violation on certain devices such as Samsung
-        components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+        components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             super.onCreate(savedInstanceState)
         }
 
@@ -114,7 +123,7 @@ class IntentReceiverActivity : Activity() {
             )
         }
         // StrictMode violation on certain devices such as Samsung
-        components.strictMode.resetAfter(StrictMode.allowThreadDiskReads()) {
+        components.strictMode.allowViolation(StrictMode::allowThreadDiskReads) {
             startActivity(intent)
         }
         finish() // must finish() after starting the other activity
@@ -127,7 +136,6 @@ class IntentReceiverActivity : Activity() {
                 components.intentProcessors.privateIntentProcessor,
             )
         } else {
-            Events.openedLink.record(Events.OpenedLinkExtra("NORMAL"))
             listOf(
                 components.intentProcessors.customTabIntentProcessor,
                 components.intentProcessors.intentProcessor,
@@ -146,10 +154,6 @@ class IntentReceiverActivity : Activity() {
 
     private fun addReferrerInformation(intent: Intent) {
         // Pass along referrer information when possible.
-        // Referrer is supported for API>=22.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
-            return
-        }
         // unfortunately you can get a RuntimeException thrown from android here
         @Suppress("TooGenericExceptionCaught")
         val r = try {
@@ -160,15 +164,12 @@ class IntentReceiverActivity : Activity() {
             return
         } ?: return
         intent.putExtra(EXTRA_ACTIVITY_REFERRER_PACKAGE, r.host)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Category is supported for API>=26.
-            r.host?.let { host ->
-                try {
-                    val category = packageManager.getApplicationInfoCompat(host, 0).category
-                    intent.putExtra(EXTRA_ACTIVITY_REFERRER_CATEGORY, category)
-                } catch (e: PackageManager.NameNotFoundException) {
-                    // At least we tried.
-                }
+        r.host?.let { host ->
+            try {
+                val category = packageManagerCompatHelper.getApplicationInfoCompat(host, 0).category
+                intent.putExtra(EXTRA_ACTIVITY_REFERRER_CATEGORY, category)
+            } catch (_: PackageManager.NameNotFoundException) {
+                // At least we tried.
             }
         }
     }

@@ -11,40 +11,49 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import org.mozilla.fenix.R
-import org.mozilla.fenix.components.lazyStore
+import mozilla.components.lib.state.helpers.StoreProvider.Companion.fragmentStore
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.settings.SupportUtils
+import org.mozilla.fenix.termsofuse.experimentation.getTermsOfUsePromptContent
 import org.mozilla.fenix.termsofuse.store.DefaultTermsOfUsePromptRepository
 import org.mozilla.fenix.termsofuse.store.TermsOfUsePromptAction
 import org.mozilla.fenix.termsofuse.store.TermsOfUsePromptPreferencesMiddleware
+import org.mozilla.fenix.termsofuse.store.TermsOfUsePromptState
 import org.mozilla.fenix.termsofuse.store.TermsOfUsePromptStore
+import org.mozilla.fenix.termsofuse.store.TermsOfUsePromptTelemetryMiddleware
 import org.mozilla.fenix.theme.FirefoxTheme
+import com.google.android.material.R as materialR
 
 /**
- * [BottomSheetDialogFragment] wrapper for the compose [TermsOfUseBottomSheet]
+ * [BottomSheetDialogFragment] wrapper for the compose [TermsOfUseBottomSheet].
  */
 class TermsOfUseBottomSheetFragment : BottomSheetDialogFragment() {
 
-    private val termsOfUsePromptStore by lazyStore {
+    private val args by navArgs<TermsOfUseBottomSheetFragmentArgs>()
+
+    private val termsOfUsePromptStore by fragmentStore(TermsOfUsePromptState) {
         TermsOfUsePromptStore(
+            initialState = it,
             middleware = listOf(
                 TermsOfUsePromptPreferencesMiddleware(
                     repository = DefaultTermsOfUsePromptRepository(
                         settings = requireContext().settings(),
                     ),
                 ),
+                TermsOfUsePromptTelemetryMiddleware(),
             ),
         )
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         super.onCreateDialog(savedInstanceState).apply {
-            window?.setDimAmount(0f)
             setOnShowListener {
-                val bottomSheet = findViewById<View?>(R.id.design_bottom_sheet)
+                val bottomSheet = findViewById<View?>(materialR.id.design_bottom_sheet)
                 bottomSheet?.setBackgroundResource(android.R.color.transparent)
+
+                termsOfUsePromptStore.dispatch(TermsOfUsePromptAction.OnImpression(args.surface))
             }
         }
 
@@ -55,24 +64,13 @@ class TermsOfUseBottomSheetFragment : BottomSheetDialogFragment() {
     ): View = ComposeView(requireContext()).apply {
         setContent {
             FirefoxTheme {
-                TermsOfUseBottomSheet(
-                    store = termsOfUsePromptStore,
-                    onDismiss = {
-                        dismiss()
-                    },
-                    onTermsOfUseClicked = {
-                        SupportUtils.launchSandboxCustomTab(
-                            context,
-                            SupportUtils.getMozillaPageUrl(SupportUtils.MozillaPage.TERMS_OF_SERVICE),
-                        )
-                    },
-                    onPrivacyNoticeClicked = {
-                        SupportUtils.launchSandboxCustomTab(
-                            context,
-                            SupportUtils.getMozillaPageUrl(SupportUtils.MozillaPage.PRIVATE_NOTICE),
-                        )
-                    },
+                val termsOfUsePromptContent = getTermsOfUsePromptContent(
+                    context = requireActivity().applicationContext,
+                    id = settings().termsOfUsePromptContentOptionId,
                     onLearnMoreClicked = {
+                        termsOfUsePromptStore.dispatch(
+                            TermsOfUsePromptAction.OnLearnMoreClicked(args.surface),
+                        )
                         SupportUtils.launchSandboxCustomTab(
                             context,
                             SupportUtils.getSumoURLForTopic(
@@ -80,6 +78,45 @@ class TermsOfUseBottomSheetFragment : BottomSheetDialogFragment() {
                                 SupportUtils.SumoTopic.TERMS_OF_USE,
                                 useMobilePage = false,
                             ),
+                        )
+                    },
+                )
+
+                TermsOfUseBottomSheet(
+                    showDragHandle = settings().shouldShowTermsOfUsePromptDragHandle,
+                    termsOfUsePromptContent = termsOfUsePromptContent,
+                    onDismiss = { dismiss() },
+                    onDismissRequest = {
+                        termsOfUsePromptStore.dispatch(
+                            TermsOfUsePromptAction.OnPromptManuallyDismissed(args.surface),
+                        )
+
+                        dismiss()
+                    },
+                    onAcceptClicked = {
+                        termsOfUsePromptStore.dispatch(TermsOfUsePromptAction.OnAcceptClicked(args.surface))
+                    },
+                    onRemindMeLaterClicked = {
+                        termsOfUsePromptStore.dispatch(
+                            TermsOfUsePromptAction.OnRemindMeLaterClicked(args.surface),
+                        )
+                    },
+                    onTermsOfUseClicked = {
+                        termsOfUsePromptStore.dispatch(
+                            TermsOfUsePromptAction.OnTermsOfUseClicked(args.surface),
+                        )
+                        SupportUtils.launchSandboxCustomTab(
+                            context,
+                            SupportUtils.getMozillaPageUrl(SupportUtils.MozillaPage.TERMS_OF_SERVICE),
+                        )
+                    },
+                    onPrivacyNoticeClicked = {
+                        termsOfUsePromptStore.dispatch(
+                            TermsOfUsePromptAction.OnPrivacyNoticeClicked(args.surface),
+                        )
+                        SupportUtils.launchSandboxCustomTab(
+                            context,
+                            SupportUtils.getMozillaPageUrl(SupportUtils.MozillaPage.PRIVATE_NOTICE),
                         )
                     },
                 )

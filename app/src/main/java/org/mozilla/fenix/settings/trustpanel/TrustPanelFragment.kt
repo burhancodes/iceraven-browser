@@ -9,8 +9,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -22,8 +22,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +35,7 @@ import androidx.fragment.compose.content
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.mapNotNull
@@ -63,7 +62,6 @@ import org.mozilla.fenix.settings.trustpanel.store.TrustPanelStore
 import org.mozilla.fenix.settings.trustpanel.store.WebsiteInfoState
 import org.mozilla.fenix.settings.trustpanel.store.WebsitePermission
 import org.mozilla.fenix.settings.trustpanel.ui.ClearSiteDataDialog
-import org.mozilla.fenix.settings.trustpanel.ui.ConnectionSecurityPanel
 import org.mozilla.fenix.settings.trustpanel.ui.ProtectionPanel
 import org.mozilla.fenix.settings.trustpanel.ui.TrackerCategoryDetailsPanel
 import org.mozilla.fenix.settings.trustpanel.ui.TrackersBlockedPanel
@@ -78,6 +76,7 @@ import org.mozilla.fenix.utils.enterMenu
 import org.mozilla.fenix.utils.enterSubmenu
 import org.mozilla.fenix.utils.exitMenu
 import org.mozilla.fenix.utils.exitSubmenu
+import com.google.android.material.R as materialR
 
 /**
  * A bottom sheet dialog fragment displaying the unified trust panel.
@@ -92,7 +91,7 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
     ) { isGranted: Map<String, Boolean> -> permissionsCallback.invoke(isGranted) }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        super.onCreateDialog(savedInstanceState).apply {
+        (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
             setOnShowListener {
                 val safeActivity = activity ?: return@setOnShowListener
                 val browsingModeManager = (safeActivity as HomeActivity).browsingModeManager
@@ -102,19 +101,17 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                 } else {
                     ContextCompat.getColor(context, R.color.fx_mobile_layer_color_3)
                 }
-
                 window?.setNavigationBarColorCompat(navigationBarColor)
 
-                val bottomSheet = findViewById<View?>(R.id.design_bottom_sheet)
-                bottomSheet?.setBackgroundResource(android.R.color.transparent)
+                findViewById<FrameLayout>(materialR.id.design_bottom_sheet)
+                    ?.setBackgroundResource(android.R.color.transparent)
 
-                val behavior = BottomSheetBehavior.from(bottomSheet)
                 behavior.peekHeight = resources.displayMetrics.heightPixels
                 behavior.state = BottomSheetBehavior.STATE_EXPANDED
             }
         }
 
-    @Suppress("LongMethod", "MagicNumber")
+    @Suppress("LongMethod", "MagicNumber", "CognitiveComplexMethod")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -144,7 +141,6 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                     },
                     middleware = listOf(
                         TrustPanelMiddleware(
-                            appStore = components.appStore,
                             engine = components.core.engine,
                             publicSuffixList = components.publicSuffixList,
                             sessionUseCases = components.useCases.sessionUseCases,
@@ -174,8 +170,7 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
             MenuDialogBottomSheet(
                 modifier = Modifier
                     .padding(top = 8.dp, bottom = 5.dp)
-                    .fillMaxWidth(0.1f)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth(0.1f),
                 onRequestDismiss = ::dismiss,
                 handlebarContentDescription = "",
             ) {
@@ -200,6 +195,7 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                 val websitePermissions by store.observeAsState(initialValue = listOf()) { state ->
                     state.websitePermissionsState.values
                 }
+                val isGlobalTrackingProtectionEnabled = settings.shouldUseTrackingProtection
 
                 permissionsCallback = { isGranted: Map<String, Boolean> ->
                     if (isGranted.values.all { it }) {
@@ -234,7 +230,6 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                 BackHandler {
                     when (contentState) {
                         Route.TrackersPanel,
-                        Route.ConnectionSecurityPanel,
                         -> contentState = Route.ProtectionPanel
 
                         Route.TrackerCategoryDetailsPanel,
@@ -264,10 +259,12 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                     when (route) {
                         Route.ProtectionPanel -> {
                             ProtectionPanel(
+                                websiteInfoState = store.state.websiteInfoState,
                                 icon = sessionState?.content?.icon,
                                 isTrackingProtectionEnabled = isTrackingProtectionEnabled,
+                                isGlobalTrackingProtectionEnabled = isGlobalTrackingProtectionEnabled,
+                                isLocalPdf = args.isLocalPdf,
                                 numberOfTrackersBlocked = numberOfTrackersBlocked,
-                                websiteInfoState = store.state.websiteInfoState,
                                 websitePermissions = websitePermissions.filter { it.isVisible },
                                 onTrackerBlockedMenuClick = {
                                     contentState = Route.TrackersPanel
@@ -278,9 +275,6 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                                 onClearSiteDataMenuClick = {
                                     store.dispatch(TrustPanelAction.RequestClearSiteDataDialog)
                                     contentState = Route.ClearSiteDataDialog
-                                },
-                                onConnectionSecurityClick = {
-                                    contentState = Route.ConnectionSecurityPanel
                                 },
                                 onPrivacySecuritySettingsClick = {
                                     store.dispatch(TrustPanelAction.Navigate.PrivacySecuritySettings)
@@ -314,20 +308,10 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
                         Route.TrackerCategoryDetailsPanel -> {
                             TrackerCategoryDetailsPanel(
                                 title = args.title,
-                                isTotalCookieProtectionEnabled = components.settings.enabledTotalCookieProtection,
                                 detailedTrackerCategory = detailedTrackerCategory,
                                 bucketedTrackers = bucketedTrackers,
                                 onBackButtonClick = {
                                     contentState = Route.TrackersPanel
-                                },
-                            )
-                        }
-
-                        Route.ConnectionSecurityPanel -> {
-                            ConnectionSecurityPanel(
-                                websiteInfoState = store.state.websiteInfoState,
-                                onBackButtonClick = {
-                                    contentState = Route.ProtectionPanel
                                 },
                             )
                         }
@@ -396,6 +380,5 @@ enum class Route {
     ProtectionPanel,
     TrackersPanel,
     TrackerCategoryDetailsPanel,
-    ConnectionSecurityPanel,
     ClearSiteDataDialog,
 }
