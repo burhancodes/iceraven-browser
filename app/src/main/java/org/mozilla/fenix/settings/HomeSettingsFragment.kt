@@ -74,7 +74,7 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupPreferences() {
         requirePreference<SwitchPreference>(R.string.pref_key_show_top_sites).apply {
-            isChecked = context.settings().showTopSitesFeature
+            isChecked = fenixSettings.showTopSitesFeature
             onPreferenceChangeListener = object : SharedPreferenceUpdater() {
                 override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                     CustomizeHome.preferenceToggled.record(
@@ -90,7 +90,7 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
         }
 
         requirePreference<SwitchPreference>(R.string.pref_key_show_top_recent_sites).apply {
-            isChecked = context.settings().showTopRecentSites
+            isChecked = fenixSettings.showTopRecentSites
             onPreferenceChangeListener = object : SharedPreferenceUpdater() {
                 override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                     CustomizeHome.preferenceToggled.record(
@@ -105,21 +105,10 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-//        requirePreference<CheckBoxPreference>(R.string.pref_key_enable_contile).apply {
-//            isChecked = context.settings().showContileFeature
-//            onPreferenceChangeListener = object : SharedPreferenceUpdater() {
-//                override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
-//                    CustomizeHome.preferenceToggled.record(
-//                        CustomizeHome.PreferenceToggledExtra(
-//                            newValue as Boolean,
-//                            "contile",
-//                        ),
-//                    )
-//
-//                    return super.onPreferenceChange(preference, newValue)
-//                }
-//            }
-//        }
+        // requirePreference<CheckBoxPreference>(R.string.pref_key_enable_contile).apply {
+        //     isChecked = fenixSettings.showContileFeature
+        //     onPreferenceChangeListener = createMetricPreferenceChangeListener("contile")
+        // }
 
         requirePreference<SwitchPreference>(R.string.pref_key_recent_tabs).apply {
             isVisible = fenixSettings.showHomepageRecentTabsSectionToggle
@@ -140,27 +129,28 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
         }
 
         // requirePreference<CheckBoxPreference>(R.string.pref_key_pocket_sponsored_stories).apply {
-        //     isVisible = ContentRecommendationsFeatureHelper.isPocketSponsoredStoriesFeatureEnabled(context)
-        //     isChecked = context.settings().showPocketSponsoredStories
-        //     onPreferenceChangeListener = object : SharedPreferenceUpdater() {
-        //         override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
-        //             when (newValue) {
-        //                 true -> {
-        //                     context.components.core.pocketStoriesService.startPeriodicSponsoredContentsRefresh()
-        //                 }
-        //                 false -> {
-        //                     context.components.core.pocketStoriesService.deleteUser()
+        //     isVisible = contentRecommendationsHelper.isPocketSponsoredStoriesFeatureEnabled(requireContext())
+        //     isChecked = fenixSettings.showPocketSponsoredStories
+        //     onPreferenceChangeListener = Preference.OnPreferenceChangeListener { preference, newValue ->
+        //         val newBooleanValue = newValue as? Boolean ?: return@OnPreferenceChangeListener false
 
-        //                     context.components.appStore.dispatch(
-        //                         ContentRecommendationsAction.SponsoredContentsChange(
-        //                             sponsoredContents = emptyList(),
-        //                         ),
-        //                     )
-        //                 }
+        //         when (newBooleanValue) {
+        //             true -> {
+        //                 fenixComponents.core.pocketStoriesService.startPeriodicSponsoredContentsRefresh()
         //             }
+        //             false -> {
+        //                 fenixComponents.core.pocketStoriesService.deleteUser()
 
-        //             return super.onPreferenceChange(preference, newValue)
+        //                 fenixComponents.appStore.dispatch(
+        //                     AppAction.ContentRecommendationsAction.SponsoredContentsChange(
+        //                         sponsoredContents = emptyList(),
+        //                     ),
+        //                 )
+        //             }
         //         }
+
+        //         fenixSettings.preferences.edit { putBoolean(preference.key, newBooleanValue) }
+        //         true
         //     }
         // }
 
@@ -169,13 +159,6 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
             isChecked = fenixSettings.historyMetadataUIFeature
             onPreferenceChangeListener = createMetricPreferenceChangeListener("recently_visited")
         }
-
-        val openingScreenRadioHomepage =
-            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_always)
-        val openingScreenLastTab =
-            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_never)
-        val openingScreenAfterFourHours =
-            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_after_four_hours)
 
         requirePreference<Preference>(R.string.pref_key_wallpapers).apply {
             setOnPreferenceClickListener {
@@ -188,13 +171,6 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
                 true
             }
         }
-
-        addToRadioGroup(
-            openingScreenRadioHomepage,
-            openingScreenLastTab,
-            openingScreenAfterFourHours,
-        )
-
 
         val defaultHomepage =
             requirePreference<RadioButtonPreference>(R.string.pref_key_default_homepage)
@@ -210,6 +186,7 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
             text = requireContext().settings().customHomepageUrl
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
+        setupOpeningScreenPreferences()
     }
 
     private fun createMetricPreferenceChangeListener(metricKey: String): Preference.OnPreferenceChangeListener {
@@ -227,5 +204,26 @@ class HomeSettingsFragment : PreferenceFragmentCompat() {
 
             true
         }
+    }
+
+    private fun setupOpeningScreenPreferences() {
+        val openingScreenRadioHomepage =
+            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_always).apply {
+                setDefaultValue(fenixSettings.alwaysOpenTheHomepageWhenOpeningTheApp)
+            }
+        val openingScreenLastTab =
+            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_never).apply {
+                setDefaultValue(fenixSettings.alwaysOpenTheLastTabWhenOpeningTheApp)
+            }
+        val openingScreenAfterFourHours =
+            requirePreference<RadioButtonPreference>(R.string.pref_key_start_on_home_after_four_hours).apply {
+                setDefaultValue(fenixSettings.openHomepageAfterFourHoursOfInactivity)
+            }
+
+        addToRadioGroup(
+            openingScreenRadioHomepage,
+            openingScreenLastTab,
+            openingScreenAfterFourHours,
+        )
     }
 }

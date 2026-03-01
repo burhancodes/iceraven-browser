@@ -27,6 +27,8 @@ class AdjustMetricsService(private val application: Application) : MetricsServic
     override fun start() {}
 
     override fun stop() {
+        logger.info("Stopped")
+
         Adjust.disable()
         Adjust.gdprForgetMe(application.applicationContext)
     }
